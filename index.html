@@ -34,6 +34,13 @@
   "description": "Agência de performance especializada em sites institucionais de alta conversão e gestão de tráfego pago (Google Ads, Meta Ads e TikTok Ads) para empresas que já vendem e querem escalar.",
   "email": "comercial.atlasperformance@gmail.com",
   "telephone": "+5511958031583",
+  "priceRange": "$$",
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+    "opens": "00:00",
+    "closes": "23:59"
+  },
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "São Paulo",
@@ -46,6 +53,62 @@
   ],
   "sameAs": [
     "https://wa.me/5511958031583"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Em quanto tempo vejo resultado?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Os primeiros sinais aparecem nas primeiras semanas de campanha no ar. Mas tratamos os primeiros 90 dias como ciclo de calibragem: testar criativos, ajustar funil e encontrar o custo de aquisição sustentável para escalar. Quem promete milagre em 7 dias está vendendo outra coisa."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Quanto preciso investir em mídia?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não existe número mágico: depende do seu ticket, da margem e da meta. No diagnóstico gratuito calculamos o investimento mínimo para o seu caso fazer sentido, e falamos com franqueza se ainda não for a hora de investir."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Já me queimei com agência. Por que a Atlas seria diferente?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Três diferenças práticas: relatório semanal com número de negócio (venda, CAC, ROAS, não alcance), você não mexe em configuração nem em plataforma, a gente cuida disso, e um único time responsável do criativo ao funil. Se algo não performar, você enxerga rápido e cobra rápido."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Vocês atendem o meu segmento?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Operamos com e-commerce, clínicas, SaaS B2B e serviços premium. No diagnóstico avaliamos se existe uma tese de crescimento real para o seu caso. E, se não existir, a gente diz."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Como funciona o diagnóstico gratuito?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Você chama a gente no WhatsApp e conta rapidamente sobre a sua operação. A partir daí, a gente audita seu site, sua mídia e seus dados e apresenta um plano de escalada com prioridades claras. Sem compromisso, sem call de duas horas para empurrar contrato."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Preciso contratar site e tráfego pago juntos?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Não. Você pode começar só pelo site ou só pelo tráfego pago. Mas quem faz os dois com a gente sente a diferença: o site é construído pensando em quem vem do anúncio, e o anúncio é otimizado pensando em quem vai cair no site."
+      }
+    }
   ]
 }
 </script>
@@ -89,6 +152,7 @@ setTimeout(function () { if (!window.Motion) document.documentElement.classList.
   --z-content:1;--z-float:40;--z-header:100;--z-overlay:120;--z-cinema:200;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+picture{display:contents}
 html:focus-within{scroll-behavior:smooth}
 body{
   background:var(--black);
@@ -615,7 +679,10 @@ h2.title .dim{color:transparent;-webkit-text-stroke:1.5px rgba(245,244,242,.5)}
 
 <header class="site-header" id="siteHeader">
   <a class="brand" href="#topo" aria-label="Atlas Performance Group, início">
-    <img src="assets/logo.jpg" alt="Logo Atlas Performance Group" width="44" height="44"/>
+    <picture>
+      <source srcset="assets/logo.webp" type="image/webp"/>
+      <img src="assets/logo.jpg" alt="Logo Atlas Performance Group" width="44" height="44"/>
+    </picture>
     <span class="brand-name">Atlas <em>Performance</em></span>
   </a>
   <nav class="main-nav" aria-label="Navegação principal">
@@ -633,7 +700,10 @@ h2.title .dim{color:transparent;-webkit-text-stroke:1.5px rgba(245,244,242,.5)}
 <section class="hero-runway" id="topo">
   <div class="hero">
     <div class="hero-img-wrap">
-      <img class="hero-img" src="assets/hero.jpg" alt="Montanha sob um céu vermelho com um sol brilhando exatamente no pico" width="1536" height="1024" fetchpriority="high"/>
+      <picture>
+        <source srcset="assets/hero.webp" type="image/webp"/>
+        <img class="hero-img" src="assets/hero.jpg" alt="Montanha sob um céu vermelho com um sol brilhando exatamente no pico" width="1536" height="1024" fetchpriority="high"/>
+      </picture>
       <canvas class="hero-canvas" aria-hidden="true"></canvas>
     </div>
     <div class="hero-shade" aria-hidden="true"></div>
@@ -763,7 +833,10 @@ h2.title .dim{color:transparent;-webkit-text-stroke:1.5px rgba(245,244,242,.5)}
 <!-- ============ INTERLUDE: MANIFESTO ============ -->
 <section class="interlude" aria-label="Manifesto Atlas">
   <div class="interlude-bg" aria-hidden="true">
-    <img src="assets/bg-climber.jpg" alt="" width="1672" height="941" loading="lazy" class="climber-img"/>
+    <picture>
+      <source srcset="assets/bg-climber.webp" type="image/webp"/>
+      <img src="assets/bg-climber.jpg" alt="" width="1672" height="941" loading="lazy" class="climber-img"/>
+    </picture>
   </div>
   <div class="container">
     <span class="kicker reveal">Manifesto Atlas</span>
@@ -915,7 +988,10 @@ h2.title .dim{color:transparent;-webkit-text-stroke:1.5px rgba(245,244,242,.5)}
 <!-- ============ FINAL CTA ============ -->
 <section class="closing-cta section-pad" id="contato">
   <div class="cta-bg" aria-hidden="true">
-    <img src="assets/bg-horizon.jpg" alt="" width="1536" height="1024" loading="lazy"/>
+    <picture>
+      <source srcset="assets/bg-horizon.webp" type="image/webp"/>
+      <img src="assets/bg-horizon.jpg" alt="" width="1536" height="1024" loading="lazy"/>
+    </picture>
   </div>
   <div class="cta-glow" aria-hidden="true" data-breathe></div>
   <div class="container cta-grid">
@@ -952,7 +1028,7 @@ h2.title .dim{color:transparent;-webkit-text-stroke:1.5px rgba(245,244,242,.5)}
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="brand" href="#topo"><img src="assets/logo.jpg" alt="" width="44" height="44"/><span class="brand-name">Atlas <em>Performance</em></span></a>
+        <a class="brand" href="#topo"><picture><source srcset="assets/logo.webp" type="image/webp"/><img src="assets/logo.jpg" alt="Logo Atlas Performance Group" width="44" height="44"/></picture><span class="brand-name">Atlas <em>Performance</em></span></a>
         <p class="tag">Existimos para uma coisa: colocar a sua marca no topo, com sites que vendem e tráfego pago que não erra o alvo.</p>
       </div>
       <div>
