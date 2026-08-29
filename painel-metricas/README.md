@@ -9,8 +9,8 @@ somente-leitura para os clientes.
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind
-- Postgres (via `pg`) — funciona com Vercel Postgres, Neon, Supabase ou
-  qualquer Postgres gerenciado
+- MongoDB (via driver oficial `mongodb`) — funciona com MongoDB Atlas ou
+  qualquer instância MongoDB
 - Recharts para o gráfico de evolução diária
 - Sessão de admin simples via cookie assinado (sem OAuth)
 
@@ -34,10 +34,10 @@ período fixo importado.
 
 ## Rodando localmente
 
-1. Configure um Postgres (local, Neon, Supabase, Vercel Postgres...) e copie
-   `.env.example` para `.env.local` preenchendo `DATABASE_URL`,
-   `ADMIN_PASSWORD` e `SESSION_SECRET`.
-2. Instale as dependências e rode as migrations:
+1. Configure um banco MongoDB (Atlas ou local) e copie `.env.example` para
+   `.env.local` preenchendo `MONGODB_URI`, `ADMIN_PASSWORD` e
+   `SESSION_SECRET`.
+2. Instale as dependências e crie os índices:
 
    ```bash
    npm install
@@ -73,5 +73,5 @@ período fixo importado.
 Este projeto vive na subpasta `painel-metricas/` deste repositório (que
 também hospeda o site institucional estático da Atlas). Ao criar o projeto
 na Vercel, aponte o **Root Directory** para `painel-metricas` e configure as
-variáveis de ambiente (`DATABASE_URL`, `ADMIN_PASSWORD`, `SESSION_SECRET`,
+variáveis de ambiente (`MONGODB_URI`, `ADMIN_PASSWORD`, `SESSION_SECRET`,
 `NEXT_PUBLIC_BASE_URL`) no painel do projeto.

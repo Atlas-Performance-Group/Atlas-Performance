@@ -1,27 +1,29 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import pg from "pg";
+import { MongoClient } from "mongodb";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  console.error("DATABASE_URL não definida. Configure o .env.local antes de rodar as migrations.");
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error("MONGODB_URI não definida. Configure o .env.local antes de rodar este script.");
   process.exit(1);
 }
 
-const sql = readFileSync(path.join(__dirname, "..", "db", "schema.sql"), "utf8");
-
-const client = new pg.Client({ connectionString });
+const client = new MongoClient(uri);
 
 try {
   await client.connect();
-  await client.query(sql);
-  console.log("Migrations aplicadas com sucesso.");
+  const db = client.db();
+
+  await db.collection("clients").createIndex({ slug: 1 }, { unique: true });
+  await db.collection("daily_metrics").createIndex(
+    { client_id: 1, date_start: 1, date_end: 1 },
+    { unique: true }
+  );
+  await db.collection("daily_metrics").createIndex({ client_id: 1, date_start: 1 });
+  await db.collection("shared_links").createIndex({ token: 1 }, { unique: true });
+
+  console.log("Índices do MongoDB criados com sucesso.");
 } catch (err) {
-  console.error("Falha ao aplicar migrations:", err);
+  console.error("Falha ao criar índices:", err);
   process.exitCode = 1;
 } finally {
-  await client.end();
+  await client.close();
 }

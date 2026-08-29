@@ -1,4 +1,4 @@
-import { pool } from "./db";
+import { getDb } from "./db";
 import type { ParsedRow } from "./csv";
 import type { MetricsTotals } from "./metrics";
 import { nanoid } from "nanoid";
@@ -13,22 +13,38 @@ export type Client = {
   created_at: string;
 };
 
+type ClientDoc = Omit<Client, "id"> & { _id: string };
+
+function toClient(doc: ClientDoc): Client {
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest };
+}
+
+async function clientsCollection() {
+  const db = await getDb();
+  return db.collection<ClientDoc>("clients");
+}
+
 export async function listClients(): Promise<Client[]> {
-  const { rows } = await pool.query<Client>("select * from clients order by name asc");
-  return rows;
+  const col = await clientsCollection();
+  const docs = await col.find({}).sort({ name: 1 }).toArray();
+  return docs.map(toClient);
 }
 
 export async function getClient(id: string): Promise<Client | null> {
-  const { rows } = await pool.query<Client>("select * from clients where id = $1", [id]);
-  return rows[0] ?? null;
+  const col = await clientsCollection();
+  const doc = await col.findOne({ _id: id });
+  return doc ? toClient(doc) : null;
 }
 
 export async function getClientsByIds(ids: string[]): Promise<Client[]> {
   if (ids.length === 0) return [];
-  const { rows } = await pool.query<Client>("select * from clients where id = any($1::uuid[]) order by name asc", [
-    ids,
-  ]);
-  return rows;
+  const col = await clientsCollection();
+  const docs = await col
+    .find({ _id: { $in: ids } })
+    .sort({ name: 1 })
+    .toArray();
+  return docs.map(toClient);
 }
 
 function slugify(name: string) {
@@ -46,52 +62,22 @@ export async function createClient(input: {
   logoUrl?: string | null;
   targetCostPerConversation?: number | null;
 }): Promise<Client> {
+  const col = await clientsCollection();
   let slug = slugify(input.name);
-  const { rows: existing } = await pool.query("select 1 from clients where slug = $1", [slug]);
-  if (existing.length > 0) slug = `${slug}-${nanoid(4).toLowerCase()}`;
+  const existing = await col.findOne({ slug });
+  if (existing) slug = `${slug}-${nanoid(4).toLowerCase()}`;
 
-  const { rows } = await pool.query<Client>(
-    `insert into clients (slug, name, business_label, logo_url, target_cost_per_conversation)
-     values ($1, $2, $3, $4, $5) returning *`,
-    [slug, input.name, input.businessLabel, input.logoUrl ?? null, input.targetCostPerConversation ?? null]
-  );
-  return rows[0];
-}
-
-export async function upsertDailyMetrics(clientId: string, rows: ParsedRow[]) {
-  if (rows.length === 0) return { inserted: 0, updated: 0 };
-
-  const client = await pool.connect();
-  let inserted = 0;
-  let updated = 0;
-  try {
-    await client.query("begin");
-    for (const row of rows) {
-      const res = await client.query(
-        `insert into daily_metrics (client_id, date_start, date_end, spend, impressions, reach, link_clicks, conversations)
-         values ($1, $2, $3, $4, $5, $6, $7, $8)
-         on conflict (client_id, date_start, date_end)
-         do update set
-           spend = excluded.spend,
-           impressions = excluded.impressions,
-           reach = excluded.reach,
-           link_clicks = excluded.link_clicks,
-           conversations = excluded.conversations,
-           updated_at = now()
-         returning (xmax = 0) as inserted`,
-        [clientId, row.dateStart, row.dateEnd, row.spend, row.impressions, row.reach, row.linkClicks, row.conversations]
-      );
-      if (res.rows[0]?.inserted) inserted++;
-      else updated++;
-    }
-    await client.query("commit");
-  } catch (err) {
-    await client.query("rollback");
-    throw err;
-  } finally {
-    client.release();
-  }
-  return { inserted, updated };
+  const doc: ClientDoc = {
+    _id: nanoid(),
+    slug,
+    name: input.name,
+    business_label: input.businessLabel,
+    logo_url: input.logoUrl ?? null,
+    target_cost_per_conversation: input.targetCostPerConversation ?? null,
+    created_at: new Date().toISOString(),
+  };
+  await col.insertOne(doc);
+  return toClient(doc);
 }
 
 export type DailyRow = {
@@ -104,18 +90,72 @@ export type DailyRow = {
   conversations: number;
 };
 
+type DailyMetricDoc = DailyRow & {
+  _id: string;
+  client_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+async function dailyMetricsCollection() {
+  const db = await getDb();
+  return db.collection<DailyMetricDoc>("daily_metrics");
+}
+
+export async function upsertDailyMetrics(clientId: string, rows: ParsedRow[]) {
+  if (rows.length === 0) return { inserted: 0, updated: 0 };
+
+  const col = await dailyMetricsCollection();
+  let inserted = 0;
+  let updated = 0;
+  const now = new Date().toISOString();
+
+  for (const row of rows) {
+    const filter = { client_id: clientId, date_start: row.dateStart, date_end: row.dateEnd };
+    const existing = await col.findOne(filter, { projection: { _id: 1 } });
+    await col.updateOne(
+      filter,
+      {
+        $set: {
+          spend: row.spend,
+          impressions: row.impressions,
+          reach: row.reach,
+          link_clicks: row.linkClicks,
+          conversations: row.conversations,
+          updated_at: now,
+        },
+        $setOnInsert: { _id: nanoid(), created_at: now },
+      },
+      { upsert: true }
+    );
+    if (existing) updated++;
+    else inserted++;
+  }
+
+  return { inserted, updated };
+}
+
 // Registros diários (date_start = date_end) dentro do intervalo, mais
 // registros consolidados cujo período inteiro cabe dentro do intervalo
 // selecionado (não é possível fatiar um CSV consolidado por dia).
 export async function getMetricsInRange(clientId: string, start: string, end: string): Promise<DailyRow[]> {
-  const { rows } = await pool.query<DailyRow>(
-    `select date_start, date_end, spend, impressions, reach, link_clicks, conversations
-     from daily_metrics
-     where client_id = $1 and date_start >= $2 and date_end <= $3
-     order by date_start asc`,
-    [clientId, start, end]
-  );
-  return rows;
+  const col = await dailyMetricsCollection();
+  const docs = await col
+    .find(
+      { client_id: clientId, date_start: { $gte: start }, date_end: { $lte: end } },
+      { projection: { date_start: 1, date_end: 1, spend: 1, impressions: 1, reach: 1, link_clicks: 1, conversations: 1 } }
+    )
+    .sort({ date_start: 1 })
+    .toArray();
+  return docs.map(({ date_start, date_end, spend, impressions, reach, link_clicks, conversations }) => ({
+    date_start,
+    date_end,
+    spend,
+    impressions,
+    reach,
+    link_clicks,
+    conversations,
+  }));
 }
 
 export function sumRows(rows: DailyRow[], start: string, end: string): MetricsTotals {
@@ -154,9 +194,22 @@ export type SharedLink = {
   revoked_at: string | null;
 };
 
+type SharedLinkDoc = Omit<SharedLink, "id"> & { _id: string };
+
+function toSharedLink(doc: SharedLinkDoc): SharedLink {
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest };
+}
+
+async function sharedLinksCollection() {
+  const db = await getDb();
+  return db.collection<SharedLinkDoc>("shared_links");
+}
+
 export async function listSharedLinks(): Promise<SharedLink[]> {
-  const { rows } = await pool.query<SharedLink>("select * from shared_links order by created_at desc");
-  return rows;
+  const col = await sharedLinksCollection();
+  const docs = await col.find({}).sort({ created_at: -1 }).toArray();
+  return docs.map(toSharedLink);
 }
 
 export async function createSharedLink(input: {
@@ -168,33 +221,38 @@ export async function createSharedLink(input: {
   mode: "frozen" | "live";
   frozenSnapshot?: unknown;
 }): Promise<SharedLink> {
+  const col = await sharedLinksCollection();
   const token = nanoid(10).replace(/[_-]/g, "").toLowerCase() || nanoid(10);
-  const { rows } = await pool.query<SharedLink>(
-    `insert into shared_links (token, label, client_ids, date_start, date_end, visible_sections, mode, frozen_snapshot)
-     values ($1, $2, $3, $4, $5, $6, $7, $8) returning *`,
-    [
-      token,
-      input.label ?? null,
-      input.clientIds,
-      input.dateStart,
-      input.dateEnd,
-      JSON.stringify(input.visibleSections),
-      input.mode,
-      input.frozenSnapshot ? JSON.stringify(input.frozenSnapshot) : null,
-    ]
-  );
-  return rows[0];
+
+  const doc: SharedLinkDoc = {
+    _id: nanoid(),
+    token,
+    label: input.label ?? null,
+    client_ids: input.clientIds,
+    date_start: input.dateStart,
+    date_end: input.dateEnd,
+    visible_sections: input.visibleSections,
+    mode: input.mode,
+    frozen_snapshot: input.frozenSnapshot ?? null,
+    created_at: new Date().toISOString(),
+    revoked_at: null,
+  };
+  await col.insertOne(doc);
+  return toSharedLink(doc);
 }
 
 export async function getSharedLinkByToken(token: string): Promise<SharedLink | null> {
-  const { rows } = await pool.query<SharedLink>("select * from shared_links where token = $1", [token]);
-  return rows[0] ?? null;
+  const col = await sharedLinksCollection();
+  const doc = await col.findOne({ token });
+  return doc ? toSharedLink(doc) : null;
 }
 
 export async function revokeSharedLink(id: string) {
-  await pool.query("update shared_links set revoked_at = now() where id = $1 and revoked_at is null", [id]);
+  const col = await sharedLinksCollection();
+  await col.updateOne({ _id: id, revoked_at: null }, { $set: { revoked_at: new Date().toISOString() } });
 }
 
 export async function reactivateSharedLink(id: string) {
-  await pool.query("update shared_links set revoked_at = null where id = $1", [id]);
+  const col = await sharedLinksCollection();
+  await col.updateOne({ _id: id }, { $set: { revoked_at: null } });
 }

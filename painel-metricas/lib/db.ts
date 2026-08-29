@@ -1,38 +1,32 @@
-import { Pool, types } from "pg";
-
-// Mantém colunas `date` como string "yyyy-mm-dd" em vez de convertê-las
-// para Date (que aplicaria fuso horário e quebraria comparações simples
-// de string usadas no restante do app).
-types.setTypeParser(1082, (val) => val);
+import { MongoClient, type Db } from "mongodb";
 
 declare global {
-  var __atlasPool: Pool | undefined;
+  var __atlasMongoClient: MongoClient | undefined;
+  var __atlasMongoConnect: Promise<MongoClient> | undefined;
 }
 
-// A pool é criada de forma preguiçosa (só na primeira query em tempo de
+// A conexão é aberta de forma preguiçosa (só na primeira query em tempo de
 // requisição), não no import do módulo: rotas de API são analisadas pelo
-// Next.js durante o build, sem acesso às env vars de runtime, então criar
-// a Pool no top-level do módulo derrubaria o build por falta de
-// DATABASE_URL mesmo sem nenhuma rota sendo de fato chamada.
-function getPool(): Pool {
-  if (global.__atlasPool) return global.__atlasPool;
+// Next.js durante o build, sem acesso às env vars de runtime, então abrir
+// a conexão no top-level do módulo derrubaria o build por falta de
+// MONGODB_URI mesmo sem nenhuma rota sendo de fato chamada.
+async function getClient(): Promise<MongoClient> {
+  if (global.__atlasMongoClient) return global.__atlasMongoClient;
 
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("DATABASE_URL não está configurada.");
+  if (!global.__atlasMongoConnect) {
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error("MONGODB_URI não está configurada.");
+    }
+    global.__atlasMongoConnect = new MongoClient(uri).connect();
   }
 
-  const pool = new Pool({
-    connectionString,
-    ssl: connectionString.includes("localhost") || connectionString.includes("127.0.0.1")
-      ? false
-      : { rejectUnauthorized: false },
-  });
-  global.__atlasPool = pool;
-  return pool;
+  const client = await global.__atlasMongoConnect;
+  global.__atlasMongoClient = client;
+  return client;
 }
 
-export const pool = {
-  query: ((...args: Parameters<Pool["query"]>) => getPool().query(...args)) as Pool["query"],
-  connect: () => getPool().connect(),
-};
+export async function getDb(): Promise<Db> {
+  const client = await getClient();
+  return client.db();
+}
