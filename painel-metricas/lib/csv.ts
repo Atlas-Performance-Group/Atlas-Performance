@@ -9,6 +9,10 @@ export type ParsedRow = {
   reach: number;
   linkClicks: number;
   conversations: number;
+  // Nome do conjunto de anúncios/campanha/anúncio da linha, quando o CSV
+  // tem esse tipo de quebra. Linhas com o mesmo período mas nomes
+  // diferentes ficam como registros separados (não são somadas entre si).
+  sourceLabel: string | null;
   // Toda coluna numérica do CSV que não é uma das colunas conhecidas acima
   // (ex: CPM, CTR, Frequência, Cliques (todos), Reproduções de vídeo,
   // Custo por resultado, Engajamento com a publicação...), indexada pelo
@@ -65,6 +69,14 @@ const ALIASES = {
     "resultados",
     "results",
     "messaging conversations started",
+  ],
+  sourceLabel: [
+    "nome do conjunto de anuncios",
+    "ad set name",
+    "nome da campanha",
+    "campaign name",
+    "nome do anuncio",
+    "ad name",
   ],
 } as const;
 
@@ -131,16 +143,16 @@ function parseDate(raw: string | undefined): string | null {
   return null;
 }
 
-// Alguns exports do Meta Ads têm uma linha por conjunto de anúncios (ou
-// campanha), todas cobrindo o mesmo período — em vez de uma linha por dia.
-// Sem combinar essas linhas, elas colidiriam na mesma chave (mesmo
-// intervalo de datas) ao salvar, e cada uma sobrescreveria a anterior. Aqui
-// somamos (ou tiramos a média, para colunas do tipo CPM/CTR/frequência)
-// todas as linhas que cobrem exatamente o mesmo intervalo de datas.
+// Quando o CSV tem uma coluna de nome (conjunto de anúncios/campanha/
+// anúncio), cada nome vira um registro separado mesmo cobrindo o mesmo
+// período — não são somados entre si, para o usuário ver cada um
+// individualmente na tabela dia a dia. Só combinamos linhas que caem
+// exatamente no mesmo período E no mesmo nome (ex: duplicatas no arquivo,
+// ou quando não há coluna de nome — CSVs consolidados de um cliente só).
 function combineRowsWithSamePeriod(rows: ParsedRow[]): ParsedRow[] {
   const groups = new Map<string, ParsedRow[]>();
   for (const row of rows) {
-    const key = `${row.dateStart}|${row.dateEnd}`;
+    const key = `${row.dateStart}|${row.dateEnd}|${row.sourceLabel ?? ""}`;
     const group = groups.get(key);
     if (group) group.push(row);
     else groups.set(key, [row]);
@@ -156,6 +168,7 @@ function combineRowsWithSamePeriod(rows: ParsedRow[]): ParsedRow[] {
     const merged: ParsedRow = {
       dateStart: groupRows[0].dateStart,
       dateEnd: groupRows[0].dateEnd,
+      sourceLabel: groupRows[0].sourceLabel,
       spend: 0,
       impressions: 0,
       reach: 0,
@@ -215,6 +228,7 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
   const colReach = findColumn(normalizedHeaders, ALIASES.reach);
   const colLinkClicks = findColumn(normalizedHeaders, ALIASES.linkClicks);
   const colConversations = findColumn(normalizedHeaders, ALIASES.conversations);
+  const colSourceLabel = findColumn(normalizedHeaders, ALIASES.sourceLabel);
 
   if (!colSpend) warnings.push("Coluna de valor gasto não encontrada — assumindo R$ 0.");
   if (!colDateSingle && !colDateStart && !colDateEnd) {
@@ -222,9 +236,17 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
   }
 
   const knownColumns = new Set(
-    [colDateSingle, colDateStart, colDateEnd, colSpend, colImpressions, colReach, colLinkClicks, colConversations].filter(
-      (c): c is string => Boolean(c)
-    )
+    [
+      colDateSingle,
+      colDateStart,
+      colDateEnd,
+      colSpend,
+      colImpressions,
+      colReach,
+      colLinkClicks,
+      colConversations,
+      colSourceLabel,
+    ].filter((c): c is string => Boolean(c))
   );
   const extraHeaders = fields.filter((f) => !knownColumns.has(f));
 
@@ -258,9 +280,12 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
       }
     }
 
+    const sourceLabel = colSourceLabel ? raw[colSourceLabel]?.trim() || null : null;
+
     rows.push({
       dateStart,
       dateEnd,
+      sourceLabel,
       spend: colSpend ? parseNumber(raw[colSpend]) : 0,
       impressions: colImpressions ? Math.round(parseNumber(raw[colImpressions])) : 0,
       reach: colReach ? Math.round(parseNumber(raw[colReach])) : 0,
@@ -283,9 +308,14 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
   }
 
   const combinedRows = combineRowsWithSamePeriod(rows);
-  if (combinedRows.length < rows.length) {
+  const distinctSources = new Set(combinedRows.map((r) => r.sourceLabel).filter((label) => label !== null));
+  if (distinctSources.size > 1) {
     warnings.push(
-      `Este CSV tem mais de uma linha (ex: por conjunto de anúncios ou campanha) cobrindo o mesmo período — ${rows.length} linha(s) foram somadas em ${combinedRows.length} período(s).`
+      `Este CSV tem ${distinctSources.size} conjuntos de anúncios/campanhas diferentes — cada um foi salvo como um registro separado (os totais do painel somam todos eles).`
+    );
+  } else if (combinedRows.length < rows.length) {
+    warnings.push(
+      `Este CSV tinha linhas duplicadas para o mesmo período — ${rows.length} linha(s) foram combinadas em ${combinedRows.length}.`
     );
   }
 

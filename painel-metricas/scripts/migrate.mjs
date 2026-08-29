@@ -14,7 +14,7 @@ try {
 
   await db.collection("clients").createIndex({ slug: 1 }, { unique: true });
   await db.collection("daily_metrics").createIndex(
-    { client_id: 1, date_start: 1, date_end: 1 },
+    { client_id: 1, date_start: 1, date_end: 1, source_label: 1 },
     { unique: true }
   );
   await db.collection("daily_metrics").createIndex({ client_id: 1, date_start: 1 });

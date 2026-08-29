@@ -83,6 +83,7 @@ export async function createClient(input: {
 export type DailyRow = {
   date_start: string;
   date_end: string;
+  source_label: string | null;
   spend: number;
   impressions: number;
   reach: number;
@@ -112,7 +113,12 @@ export async function upsertDailyMetrics(clientId: string, rows: ParsedRow[]) {
   const now = new Date().toISOString();
 
   for (const row of rows) {
-    const filter = { client_id: clientId, date_start: row.dateStart, date_end: row.dateEnd };
+    const filter = {
+      client_id: clientId,
+      date_start: row.dateStart,
+      date_end: row.dateEnd,
+      source_label: row.sourceLabel,
+    };
     const existing = await col.findOne(filter, { projection: { _id: 1 } });
     await col.updateOne(
       filter,
@@ -155,6 +161,7 @@ export async function getMetricsInRange(clientId: string, start: string, end: st
         projection: {
           date_start: 1,
           date_end: 1,
+          source_label: 1,
           spend: 1,
           impressions: 1,
           reach: 1,
@@ -164,18 +171,21 @@ export async function getMetricsInRange(clientId: string, start: string, end: st
         },
       }
     )
-    .sort({ date_start: 1 })
+    .sort({ date_start: 1, source_label: 1 })
     .toArray();
-  return docs.map(({ date_start, date_end, spend, impressions, reach, link_clicks, conversations, extra }) => ({
-    date_start,
-    date_end,
-    spend,
-    impressions,
-    reach,
-    link_clicks,
-    conversations,
-    extra: extra ?? {},
-  }));
+  return docs.map(
+    ({ date_start, date_end, source_label, spend, impressions, reach, link_clicks, conversations, extra }) => ({
+      date_start,
+      date_end,
+      source_label: source_label ?? null,
+      spend,
+      impressions,
+      reach,
+      link_clicks,
+      conversations,
+      extra: extra ?? {},
+    })
+  );
 }
 
 export function sumRows(rows: DailyRow[], start: string, end: string): MetricsTotals {

@@ -26,12 +26,20 @@ export function DailyChart({ rows }: { rows: DailyRow[] }) {
     );
   }
 
-  const data = rows.map((r) => ({
-    date: formatDateLabel(r.date_start),
-    Cliques: Number(r.link_clicks),
-    Conversas: Number(r.conversations),
-    Investimento: Number(r.spend),
-  }));
+  // Soma por dia antes de plotar: um mesmo dia pode ter mais de um registro
+  // (ex: um por conjunto de anúncios), e o gráfico mostra a evolução total
+  // do cliente, não por conjunto/campanha.
+  const byDate = new Map<string, { Cliques: number; Conversas: number; Investimento: number }>();
+  for (const r of rows) {
+    const entry = byDate.get(r.date_start) ?? { Cliques: 0, Conversas: 0, Investimento: 0 };
+    entry.Cliques += Number(r.link_clicks);
+    entry.Conversas += Number(r.conversations);
+    entry.Investimento += Number(r.spend);
+    byDate.set(r.date_start, entry);
+  }
+  const data = [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, totals]) => ({ date: formatDateLabel(date), ...totals }));
 
   return (
     <div className="atlas-card p-6">
