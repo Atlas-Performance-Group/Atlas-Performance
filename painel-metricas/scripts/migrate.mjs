@@ -10,7 +10,7 @@ const client = new MongoClient(uri);
 
 try {
   await client.connect();
-  const db = client.db();
+  const db = client.db(process.env.MONGODB_DB || "painel_metricas_atlas");
 
   await db.collection("clients").createIndex({ slug: 1 }, { unique: true });
   await db.collection("daily_metrics").createIndex(

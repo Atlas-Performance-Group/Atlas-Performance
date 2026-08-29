@@ -26,7 +26,13 @@ async function getClient(): Promise<MongoClient> {
   return client;
 }
 
+// Nome fixo em vez de depender do path da connection string: integrações
+// como a da Vercel (MongoDB Atlas) costumam gerar MONGODB_URI sem nome de
+// banco (ex: "mongodb+srv://user:pass@host/?retryWrites=..."), o que faria
+// client.db() sem argumento falhar por não saber em qual banco usar.
+const DB_NAME = process.env.MONGODB_DB || "painel_metricas_atlas";
+
 export async function getDb(): Promise<Db> {
   const client = await getClient();
-  return client.db();
+  return client.db(DB_NAME);
 }
