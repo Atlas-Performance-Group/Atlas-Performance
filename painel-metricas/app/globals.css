@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+:root {
+  --red-950: #210000;
+  --red-900: #3a0508;
+  --red-800: #650003;
+  --red-700: #8f0303;
+  --red-600: #b40b0b;
+  --red-500: #d3241c;
+  --red-brand: #c00000;
+
+  --gold-300: #ffe6a3;
+  --gold-400: #fdda02;
+  --gold-500: #fdaa04;
+  --gold-600: #e08600;
+  --gold-700: #a86300;
+
+  --ink: #241412;
+  --ink-soft: #6b5850;
+  --ink-faint: #a6968d;
+  --line-soft: #f1e8d8;
+
+  --card-bg: #fffdf7;
+  --page-bg: #f6efe0;
+
+  --font-anton: "Anton", sans-serif;
+  --font-manrope: "Manrope", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: var(--font-manrope);
+}
+
+.font-display {
+  font-family: var(--font-anton);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.atlas-hero {
+  background: radial-gradient(circle at top, var(--red-600), var(--red-950) 85%);
+  color: #fff8ec;
+}
+
+.atlas-card {
+  background: var(--card-bg);
+  color: var(--ink);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px -12px rgba(33, 0, 0, 0.25);
+  border: 1px solid var(--line-soft);
+}
+
+.atlas-gold {
+  color: var(--gold-400);
+}
+
+.atlas-btn-primary {
+  background: linear-gradient(135deg, var(--gold-400), var(--gold-600));
+  color: var(--red-950);
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 0.65rem 1.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 6px 16px -6px rgba(224, 134, 0, 0.6);
+}
+
+.atlas-btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+.atlas-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.atlas-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff8ec;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  padding: 0.6rem 1.1rem;
+  font-weight: 700;
+}
+
+.atlas-btn-ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  padding: 0.5rem 0.9rem;
+  font-weight: 700;
+}
+
+.atlas-btn-ghost:hover {
+  border-color: var(--gold-500);
+  color: var(--ink);
+}
+
+.atlas-input {
+  background: #fff;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  padding: 0.55rem 0.75rem;
+  color: var(--ink);
+  font-family: var(--font-manrope);
+}
+
+.atlas-input:focus {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 1px;
+}
+
+.semaphore-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.semaphore-good {
+  background: #2fa64c;
+  box-shadow: 0 0 0 3px rgba(47, 166, 76, 0.18);
+}
+
+.semaphore-medium {
+  background: var(--gold-500);
+  box-shadow: 0 0 0 3px rgba(253, 170, 4, 0.18);
+}
+
+.semaphore-bad {
+  background: var(--red-600);
+  box-shadow: 0 0 0 3px rgba(180, 11, 11, 0.18);
+}
+
+.semaphore-neutral {
+  background: var(--ink-faint);
+  box-shadow: 0 0 0 3px rgba(166, 150, 141, 0.15);
+}
+
+::selection {
+  background: var(--gold-400);
+  color: var(--red-950);
+}
