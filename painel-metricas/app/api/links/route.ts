@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createSharedLink, getClientsByIds, getMetricsInRange, listSharedLinks, sumRows } from "@/lib/data";
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
+import { aggregateExtraMetrics } from "@/lib/extraMetrics";
 
 export async function GET() {
   const links = await listSharedLinks();
@@ -44,7 +45,8 @@ export async function POST(request: Request) {
         const totals = sumRows(rows, dateStart, dateEnd);
         const derived = computeDerivedMetrics(totals);
         const insights = generateInsights(totals);
-        return { clientId: client.id, totals, derived, insights, daily: rows };
+        const extraMetrics = aggregateExtraMetrics(rows);
+        return { clientId: client.id, totals, derived, insights, daily: rows, extraMetrics };
       })
     );
     frozenSnapshot = { generatedAt: new Date().toISOString(), data: snapshotData };

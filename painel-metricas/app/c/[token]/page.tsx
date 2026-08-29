@@ -1,6 +1,7 @@
 import { getClientsByIds, getMetricsInRange, getSharedLinkByToken, sumRows } from "@/lib/data";
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
+import { aggregateExtraMetrics } from "@/lib/extraMetrics";
 import { formatRangeLabel } from "@/lib/dateRanges";
 import { AtlasLogo, ClientLogo } from "@/components/Logo";
 import { ReportView } from "@/components/ReportView";
@@ -48,6 +49,7 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
         derived: ClientReport["derived"];
         insights: ClientReport["insights"];
         daily: DailyRow[];
+        extraMetrics: ClientReport["extraMetrics"];
       }[];
     };
     reports = snapshot.data
@@ -61,6 +63,7 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
           derived: entry.derived,
           insights: entry.insights,
           daily: entry.daily,
+          extraMetrics: entry.extraMetrics ?? [],
         } satisfies ClientReport;
       })
       .filter((r): r is ClientReport => r !== null);
@@ -71,7 +74,16 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
         const totals = sumRows(rows, link.date_start, link.date_end);
         const derived = computeDerivedMetrics(totals);
         const insights = generateInsights(totals);
-        return { client, range: { start: link.date_start, end: link.date_end }, totals, derived, insights, daily: rows };
+        const extraMetrics = aggregateExtraMetrics(rows);
+        return {
+          client,
+          range: { start: link.date_start, end: link.date_end },
+          totals,
+          derived,
+          insights,
+          daily: rows,
+          extraMetrics,
+        };
       })
     );
   }

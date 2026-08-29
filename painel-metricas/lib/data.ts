@@ -88,6 +88,7 @@ export type DailyRow = {
   reach: number;
   link_clicks: number;
   conversations: number;
+  extra: Record<string, number>;
 };
 
 type DailyMetricDoc = DailyRow & {
@@ -122,6 +123,7 @@ export async function upsertDailyMetrics(clientId: string, rows: ParsedRow[]) {
           reach: row.reach,
           link_clicks: row.linkClicks,
           conversations: row.conversations,
+          extra: row.extra,
           updated_at: now,
         },
         $setOnInsert: { _id: nanoid(), created_at: now },
@@ -143,11 +145,22 @@ export async function getMetricsInRange(clientId: string, start: string, end: st
   const docs = await col
     .find(
       { client_id: clientId, date_start: { $gte: start }, date_end: { $lte: end } },
-      { projection: { date_start: 1, date_end: 1, spend: 1, impressions: 1, reach: 1, link_clicks: 1, conversations: 1 } }
+      {
+        projection: {
+          date_start: 1,
+          date_end: 1,
+          spend: 1,
+          impressions: 1,
+          reach: 1,
+          link_clicks: 1,
+          conversations: 1,
+          extra: 1,
+        },
+      }
     )
     .sort({ date_start: 1 })
     .toArray();
-  return docs.map(({ date_start, date_end, spend, impressions, reach, link_clicks, conversations }) => ({
+  return docs.map(({ date_start, date_end, spend, impressions, reach, link_clicks, conversations, extra }) => ({
     date_start,
     date_end,
     spend,
@@ -155,6 +168,7 @@ export async function getMetricsInRange(clientId: string, start: string, end: st
     reach,
     link_clicks,
     conversations,
+    extra: extra ?? {},
   }));
 }
 

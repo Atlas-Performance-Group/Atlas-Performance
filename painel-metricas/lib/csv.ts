@@ -8,12 +8,18 @@ export type ParsedRow = {
   reach: number;
   linkClicks: number;
   conversations: number;
+  // Toda coluna numérica do CSV que não é uma das colunas conhecidas acima
+  // (ex: CPM, CTR, Frequência, Cliques (todos), Reproduções de vídeo,
+  // Custo por resultado, Engajamento com a publicação...), indexada pelo
+  // cabeçalho original da coluna no arquivo.
+  extra: Record<string, number>;
 };
 
 export type ParseResult = {
   rows: ParsedRow[];
   warnings: string[];
   isDaily: boolean;
+  extraColumns: string[];
 };
 
 function normalizeHeader(header: string): string {
@@ -72,9 +78,15 @@ function findColumn(normalizedHeaders: Map<string, string>, aliases: readonly st
   return null;
 }
 
+// Remove sufixos de unidade (%, x) antes do parse numérico, preservando o
+// valor: "1,76%" -> "1,76", "1,51x" -> "1,51".
+function stripUnitSuffix(s: string): string {
+  return s.replace(/[%x]+$/i, "");
+}
+
 function parseNumber(raw: string | undefined): number {
   if (!raw) return 0;
-  let s = raw.trim().replace(/[R$\s]/g, "");
+  let s = stripUnitSuffix(raw.trim().replace(/[R$\s]/g, ""));
   if (s === "" || s === "-" || s.toLowerCase() === "n a" || s.toLowerCase() === "na") return 0;
   // formato BR: 1.234,56 -> 1234.56 | formato US: 1234.56 já ok
   if (/,\d{1,2}$/.test(s) && s.includes(",")) {
@@ -84,6 +96,16 @@ function parseNumber(raw: string | undefined): number {
   }
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : 0;
+}
+
+// Só trata uma célula como métrica numérica se ela realmente parecer um
+// número (evita transformar colunas de texto, como nome da campanha ou
+// status de veiculação, em "métricas" com valor 0).
+function looksNumeric(raw: string | undefined): boolean {
+  if (raw === undefined) return false;
+  const s = stripUnitSuffix(raw.trim().replace(/[R$\s]/g, ""));
+  if (s === "") return false;
+  return /^-?[\d.,]+$/.test(s);
 }
 
 function parseDate(raw: string | undefined): string | null {
@@ -137,8 +159,16 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
     warnings.push("Nenhuma coluna de data encontrada no CSV.");
   }
 
+  const knownColumns = new Set(
+    [colDateSingle, colDateStart, colDateEnd, colSpend, colImpressions, colReach, colLinkClicks, colConversations].filter(
+      (c): c is string => Boolean(c)
+    )
+  );
+  const extraHeaders = fields.filter((f) => !knownColumns.has(f));
+
   const rows: ParsedRow[] = [];
   let anyRangeDiffersFromSingleDay = false;
+  const seenExtraColumns = new Set<string>();
 
   for (const raw of parsed.data) {
     let dateStart: string | null = null;
@@ -157,6 +187,15 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
 
     if (dateStart !== dateEnd) anyRangeDiffersFromSingleDay = true;
 
+    const extra: Record<string, number> = {};
+    for (const header of extraHeaders) {
+      const rawValue = raw[header];
+      if (looksNumeric(rawValue)) {
+        extra[header] = parseNumber(rawValue);
+        seenExtraColumns.add(header);
+      }
+    }
+
     rows.push({
       dateStart,
       dateEnd,
@@ -165,6 +204,7 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
       reach: colReach ? Math.round(parseNumber(raw[colReach])) : 0,
       linkClicks: colLinkClicks ? Math.round(parseNumber(raw[colLinkClicks])) : 0,
       conversations: colConversations ? Math.round(parseNumber(raw[colConversations])) : 0,
+      extra,
     });
   }
 
@@ -180,5 +220,10 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
     );
   }
 
-  return { rows, warnings, isDaily };
+  const extraColumns = [...seenExtraColumns];
+  if (extraColumns.length > 0) {
+    warnings.push(`Capturamos ${extraColumns.length} métrica(s) adicional(is) do CSV: ${extraColumns.join(", ")}.`);
+  }
+
+  return { rows, warnings, isDaily, extraColumns };
 }

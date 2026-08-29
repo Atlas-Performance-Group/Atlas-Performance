@@ -4,6 +4,7 @@ import { IndicatorGrid } from "./IndicatorGrid";
 import { DailyChart } from "./DailyChart";
 import { DailyTable } from "./DailyTable";
 import { InsightsList } from "./InsightsList";
+import { ExtraMetricsCard } from "./ExtraMetricsCard";
 
 const DEFAULT_SECTIONS: VisibleSections = {
   kpis: true,
@@ -24,6 +25,7 @@ export function ReportView({
     <div className="flex flex-col gap-6">
       {sections.kpis && <KpiCards report={report} />}
       {sections.indicators && <IndicatorGrid report={report} />}
+      {sections.indicators && <ExtraMetricsCard metrics={report.extraMetrics} />}
       {sections.chart && <DailyChart rows={report.daily} />}
       {sections.table && <DailyTable rows={report.daily} />}
       {sections.insights && <InsightsList insights={report.insights} />}
