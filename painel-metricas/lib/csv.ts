@@ -1,4 +1,5 @@
 import Papa from "papaparse";
+import { inferAggregationKind } from "./extraMetrics";
 
 export type ParsedRow = {
   dateStart: string; // yyyy-mm-dd
@@ -43,10 +44,13 @@ const ALIASES = {
   ],
   dateEnd: [
     "termino dos relatorios",
+    "encerramento dos relatorios",
     "data de termino",
+    "data de encerramento",
     "data de fim",
     "reporting ends",
     "termino",
+    "encerramento",
     "fim",
     "week ends",
     "data termino",
@@ -125,6 +129,64 @@ function parseDate(raw: string | undefined): string | null {
     return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
   }
   return null;
+}
+
+// Alguns exports do Meta Ads têm uma linha por conjunto de anúncios (ou
+// campanha), todas cobrindo o mesmo período — em vez de uma linha por dia.
+// Sem combinar essas linhas, elas colidiriam na mesma chave (mesmo
+// intervalo de datas) ao salvar, e cada uma sobrescreveria a anterior. Aqui
+// somamos (ou tiramos a média, para colunas do tipo CPM/CTR/frequência)
+// todas as linhas que cobrem exatamente o mesmo intervalo de datas.
+function combineRowsWithSamePeriod(rows: ParsedRow[]): ParsedRow[] {
+  const groups = new Map<string, ParsedRow[]>();
+  for (const row of rows) {
+    const key = `${row.dateStart}|${row.dateEnd}`;
+    const group = groups.get(key);
+    if (group) group.push(row);
+    else groups.set(key, [row]);
+  }
+
+  const combined: ParsedRow[] = [];
+  for (const groupRows of groups.values()) {
+    if (groupRows.length === 1) {
+      combined.push(groupRows[0]);
+      continue;
+    }
+
+    const merged: ParsedRow = {
+      dateStart: groupRows[0].dateStart,
+      dateEnd: groupRows[0].dateEnd,
+      spend: 0,
+      impressions: 0,
+      reach: 0,
+      linkClicks: 0,
+      conversations: 0,
+      extra: {},
+    };
+    const extraSums = new Map<string, number>();
+    const extraCounts = new Map<string, number>();
+
+    for (const row of groupRows) {
+      merged.spend += row.spend;
+      merged.impressions += row.impressions;
+      merged.reach += row.reach;
+      merged.linkClicks += row.linkClicks;
+      merged.conversations += row.conversations;
+      for (const [key, value] of Object.entries(row.extra)) {
+        extraSums.set(key, (extraSums.get(key) ?? 0) + value);
+        extraCounts.set(key, (extraCounts.get(key) ?? 0) + 1);
+      }
+    }
+
+    for (const [key, total] of extraSums) {
+      const kind = inferAggregationKind(key);
+      merged.extra[key] = kind === "avg" ? total / (extraCounts.get(key) ?? 1) : total;
+    }
+
+    combined.push(merged);
+  }
+
+  return combined;
 }
 
 export function parseMetaAdsCsv(fileContent: string): ParseResult {
@@ -220,10 +282,17 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
     );
   }
 
+  const combinedRows = combineRowsWithSamePeriod(rows);
+  if (combinedRows.length < rows.length) {
+    warnings.push(
+      `Este CSV tem mais de uma linha (ex: por conjunto de anúncios ou campanha) cobrindo o mesmo período — ${rows.length} linha(s) foram somadas em ${combinedRows.length} período(s).`
+    );
+  }
+
   const extraColumns = [...seenExtraColumns];
   if (extraColumns.length > 0) {
     warnings.push(`Capturamos ${extraColumns.length} métrica(s) adicional(is) do CSV: ${extraColumns.join(", ")}.`);
   }
 
-  return { rows, warnings, isDaily, extraColumns };
+  return { rows: combinedRows, warnings, isDaily, extraColumns };
 }
