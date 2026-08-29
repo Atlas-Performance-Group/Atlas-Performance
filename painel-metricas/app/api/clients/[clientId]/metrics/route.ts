@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getClient, getMetricsInRange, sumRows } from "@/lib/data";
+import { deleteAllMetricsForClient, getClient, getMetricsInRange, sumRows } from "@/lib/data";
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
@@ -34,4 +34,16 @@ export async function GET(request: Request, ctx: { params: Promise<{ clientId: s
     daily: rows,
     extraMetrics,
   });
+}
+
+export async function DELETE(request: Request, ctx: { params: Promise<{ clientId: string }> }) {
+  const { clientId } = await ctx.params;
+
+  const client = await getClient(clientId);
+  if (!client) {
+    return NextResponse.json({ error: "Cliente não encontrado." }, { status: 404 });
+  }
+
+  const { deleted } = await deleteAllMetricsForClient(clientId);
+  return NextResponse.json({ ok: true, deleted });
 }

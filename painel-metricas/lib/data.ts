@@ -137,6 +137,12 @@ export async function upsertDailyMetrics(clientId: string, rows: ParsedRow[]) {
   return { inserted, updated };
 }
 
+export async function deleteAllMetricsForClient(clientId: string): Promise<{ deleted: number }> {
+  const col = await dailyMetricsCollection();
+  const res = await col.deleteMany({ client_id: clientId });
+  return { deleted: res.deletedCount ?? 0 };
+}
+
 // Registros diários (date_start = date_end) dentro do intervalo, mais
 // registros consolidados cujo período inteiro cabe dentro do intervalo
 // selecionado (não é possível fatiar um CSV consolidado por dia).

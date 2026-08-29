@@ -9,6 +9,7 @@ import { ReportView } from "@/components/ReportView";
 import { ImportCsvForm } from "@/components/ImportCsvForm";
 import { AddClientForm } from "@/components/AddClientForm";
 import { GenerateLinkModal } from "@/components/GenerateLinkModal";
+import { ResetClientDataButton } from "@/components/ResetClientDataButton";
 
 export function AdminDashboard({ initialClients }: { initialClients: Client[] }) {
   const [clients, setClients] = useState<Client[]>(initialClients);
@@ -92,6 +93,11 @@ export function AdminDashboard({ initialClients }: { initialClients: Client[] })
               <button type="button" className="atlas-btn-primary" onClick={() => setShowLinkModal(true)}>
                 Gerar link para o cliente
               </button>
+              <ResetClientDataButton
+                clientId={selectedClient.id}
+                clientName={selectedClient.name}
+                onReset={loadReport}
+              />
             </div>
           </div>
 
