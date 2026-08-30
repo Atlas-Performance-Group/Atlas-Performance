@@ -5,6 +5,7 @@ import type { Client } from "@/lib/data";
 import type { DateRange } from "@/lib/dateRanges";
 import type { VisibleSections } from "@/lib/types";
 import { DateRangePicker } from "./DateRangePicker";
+import { Portal } from "./Portal";
 
 const SECTION_LABELS: { key: keyof VisibleSections; label: string }[] = [
   { key: "kpis", label: "KPIs principais" },
@@ -79,6 +80,7 @@ export function GenerateLinkModal({
   }
 
   return (
+    <Portal>
     <div
       className="fixed inset-0 flex items-center justify-center p-4 z-50"
       style={{ background: "rgba(33,0,0,0.55)" }}
@@ -210,5 +212,6 @@ export function GenerateLinkModal({
         )}
       </div>
     </div>
+    </Portal>
   );
 }

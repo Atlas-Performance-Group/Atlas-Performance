@@ -80,9 +80,7 @@ body {
 }
 
 .atlas-hero-badge {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
+  display: inline-block;
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.04em;

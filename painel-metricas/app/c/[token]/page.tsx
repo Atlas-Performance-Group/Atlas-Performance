@@ -93,21 +93,27 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="atlas-hero px-6 py-10 atlas-fade-in text-center">
-        <span className="atlas-hero-badge">Gerado em {formatDateBR(generatedAt)}</span>
-        <div className="max-w-5xl mx-auto flex items-center justify-center">
-          <AtlasLogo size="md" />
+      <header className="atlas-hero px-6 py-10 atlas-fade-in">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 items-center gap-4 text-center md:text-left">
+          <div>
+            <h1 className="font-display text-3xl">
+              MÉTRICAS <span className="atlas-gold">ATLAS</span>
+            </h1>
+            <p className="text-sm mt-1" style={{ color: "#ffe6a3" }}>
+              Painel de Performance · Atlas Performance Group
+            </p>
+            <p className="text-sm mt-1 font-bold" style={{ color: "#fff8ec" }}>
+              Período: {formatRangeLabel({ start: link.date_start, end: link.date_end })}
+            </p>
+          </div>
+          <div className="flex flex-col items-center order-first md:order-none">
+            <AtlasLogo size="lg" />
+            <div className="atlas-hero-divider" />
+          </div>
+          <div className="flex justify-center md:justify-end">
+            <span className="atlas-hero-badge">Gerado em {formatDateBR(generatedAt)}</span>
+          </div>
         </div>
-        <div className="atlas-hero-divider" />
-        <h1 className="max-w-5xl mx-auto font-display text-3xl mt-4">
-          MÉTRICAS <span className="atlas-gold">ATLAS</span>
-        </h1>
-        <p className="max-w-5xl mx-auto text-sm mt-1" style={{ color: "#ffe6a3" }}>
-          Painel de Performance · Atlas Performance Group
-        </p>
-        <p className="max-w-5xl mx-auto text-sm mt-1 font-bold" style={{ color: "#fff8ec" }}>
-          Período: {formatRangeLabel({ start: link.date_start, end: link.date_end })}
-        </p>
       </header>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-6 flex flex-col gap-10">

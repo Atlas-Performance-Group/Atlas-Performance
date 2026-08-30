@@ -3,7 +3,7 @@ export function AtlasLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src="/atlas-logo.webp"
+      src="/atlas-logo-mark.png"
       alt="Atlas Performance Group"
       className={`${heights[size]} w-auto object-contain`}
     />
