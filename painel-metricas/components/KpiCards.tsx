@@ -1,4 +1,4 @@
-import { formatCurrencyBRL, formatNumber, percentDelta } from "@/lib/metrics";
+import { formatCurrencyBRL, formatNumber, percentDelta, spendWithTax } from "@/lib/metrics";
 import type { ClientReport } from "@/lib/types";
 
 // Verde/vermelho de acordo com o que é bom para aquela métrica: mais
@@ -26,11 +26,19 @@ export function KpiCards({ report }: { report: ClientReport }) {
   const prevTotals = comparison?.previousTotals ?? null;
   const prevDerived = comparison?.previousDerived ?? null;
 
-  const items = [
+  const items: {
+    label: string;
+    value: string;
+    desc: string;
+    note?: string;
+    delta: number | null;
+    higherIsBetter: boolean | null;
+  }[] = [
     {
       label: "Investimento",
       value: formatCurrencyBRL(totals.spend),
       desc: "Total investido em anúncios nesse período.",
+      note: `+ 12,5% de imposto: ${formatCurrencyBRL(spendWithTax(totals.spend))}`,
       delta: percentDelta(totals.spend, prevTotals?.spend ?? null),
       higherIsBetter: null,
     },
@@ -68,6 +76,11 @@ export function KpiCards({ report }: { report: ClientReport }) {
             {item.value}
             <DeltaBadge delta={item.delta} higherIsBetter={item.higherIsBetter} />
           </div>
+          {item.note && (
+            <div className="text-xs font-bold mt-1" style={{ color: "var(--ink-soft)" }}>
+              {item.note}
+            </div>
+          )}
           <div className="text-xs mt-2" style={{ color: "var(--ink-faint)" }}>
             {item.desc}
             {comparison && (

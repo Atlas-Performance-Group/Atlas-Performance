@@ -102,6 +102,15 @@ export function costPerConversationStatus(
   return "bad";
 }
 
+// Imposto aplicado sobre o valor gasto em anúncios, exibido como observação
+// ao lado do investimento (não altera os demais cálculos — CPC, custo por
+// conversa etc. continuam sobre o valor gasto "puro" reportado pelo Meta).
+export const AD_SPEND_TAX_RATE = 0.125;
+
+export function spendWithTax(spend: number): number {
+  return spend * (1 + AD_SPEND_TAX_RATE);
+}
+
 export function formatCurrencyBRL(value: number | null): string {
   if (value === null || Number.isNaN(value)) return "—";
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
