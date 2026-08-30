@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyRow } from "@/lib/data";
-import { computePerformanceBreakdown, scoreColor, type PerformanceBreakdown } from "@/lib/performanceScore";
+import { computePerformanceBreakdowns, scoreColor, type PerformanceBreakdown } from "@/lib/performanceScore";
 import type { MetricsTotals } from "@/lib/metrics";
 import { PerformanceTooltipContent } from "./PerformanceTooltip";
 
@@ -41,12 +41,14 @@ export function DailyPerformanceChart({
     byDate.set(r.date_start, entry);
   }
 
-  const data: DataPoint[] = [...byDate.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, totals]) => {
-      const breakdown = computePerformanceBreakdown(totals, targetCostPerConversation);
-      return { date: formatDateLabel(date), score: breakdown.score ?? 0, breakdown };
-    });
+  const dates = [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b));
+  const breakdowns = computePerformanceBreakdowns(dates, ([, totals]) => totals, targetCostPerConversation);
+
+  const data: DataPoint[] = dates.map((entry) => {
+    const [date] = entry;
+    const breakdown = breakdowns.get(entry)!;
+    return { date: formatDateLabel(date), score: breakdown.score ?? 0, breakdown };
+  });
 
   if (data.length === 0) return null;
 
@@ -56,8 +58,9 @@ export function DailyPerformanceChart({
         Desempenho <span className="atlas-gold">Dia a Dia</span>
       </h3>
       <p className="text-xs mb-4" style={{ color: "var(--ink-faint)" }}>
-        Combina CTR, frequência, taxa de conversa e custo por conversa em uma escala de -100 (dia ruim) a
-        100 (dia bom). Passe o mouse em uma barra para ver o porquê da pontuação.
+        Combina a eficiência (CTR, frequência, taxa de conversa, custo por conversa) com o volume real de
+        cliques e conversas de cada dia, comparado aos outros dias do período. Passe o mouse em uma barra
+        para ver o porquê da pontuação.
       </p>
       <div style={{ width: "100%", height: 240 }}>
         <ResponsiveContainer>

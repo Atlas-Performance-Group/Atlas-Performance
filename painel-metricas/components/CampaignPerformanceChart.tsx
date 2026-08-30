@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyRow } from "@/lib/data";
-import { computePerformanceBreakdown, scoreColor, type PerformanceBreakdown } from "@/lib/performanceScore";
+import { computePerformanceBreakdowns, scoreColor, type PerformanceBreakdown } from "@/lib/performanceScore";
 import type { MetricsTotals } from "@/lib/metrics";
 import { PerformanceTooltipContent } from "./PerformanceTooltip";
 
@@ -33,9 +33,13 @@ export function CampaignPerformanceChart({
 
   if (bySource.size === 0) return null;
 
-  const data: DataPoint[] = [...bySource.entries()]
-    .map(([label, totals]) => {
-      const breakdown = computePerformanceBreakdown(totals, targetCostPerConversation);
+  const sources = [...bySource.entries()];
+  const breakdowns = computePerformanceBreakdowns(sources, ([, totals]) => totals, targetCostPerConversation);
+
+  const data: DataPoint[] = sources
+    .map((entry) => {
+      const [label] = entry;
+      const breakdown = breakdowns.get(entry)!;
       return { label, score: breakdown.score ?? 0, breakdown };
     })
     .sort((a, b) => b.score - a.score);
@@ -46,8 +50,9 @@ export function CampaignPerformanceChart({
         Desempenho por <span className="atlas-gold">Conjunto / Campanha</span>
       </h3>
       <p className="text-xs mb-4" style={{ color: "var(--ink-faint)" }}>
-        Mesma pontuação de -100 a 100, comparando cada conjunto de anúncios ou campanha no período
-        selecionado. Passe o mouse em uma barra para ver o porquê da pontuação.
+        Combina a eficiência (CTR, frequência, taxa de conversa, custo por conversa) com o volume real de
+        cliques e conversas de cada conjunto/campanha, comparado aos demais do período selecionado. Passe
+        o mouse em uma barra para ver o porquê da pontuação.
       </p>
       <div style={{ width: "100%", height: Math.max(160, data.length * 44) }}>
         <ResponsiveContainer>

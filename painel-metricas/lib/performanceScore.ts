@@ -1,11 +1,18 @@
 // Pontuação de desempenho (-100 a 100) usada nos gráficos de "dias bons x
-// dias ruins" e "campanhas boas x ruins": combina CTR, frequência, taxa de
-// conversa e custo por conversa em um único número.
+// dias ruins" e "campanhas boas x ruins".
 //
-// Diferente dos semáforos (que só têm 3 níveis: bom/médio/ruim), aqui cada
-// métrica recebe uma nota contínua entre -1 e 1, de acordo com a distância
-// real até os limiares "ruim"/"bom" — assim duas campanhas "boas" com
-// desempenhos bem diferentes não ficam empatadas no topo da escala.
+// Combina duas coisas:
+// 1. Eficiência: CTR, frequência, taxa de conversa e custo por conversa,
+//    numa nota contínua de -1 a 1 de acordo com a distância real até os
+//    limiares "ruim"/"bom" (não só 3 níveis fixos).
+// 2. Escala real: quantos cliques e conversas aquele dia/campanha trouxe,
+//    comparado aos outros dias/campanhas do mesmo período — assim uma
+//    campanha com poucos cliques não pontua igual a uma que trouxe volume
+//    alto só porque a taxa de conversão das duas é parecida.
+//
+// As duas notas são combinadas com peso, o que evita que a maioria das
+// barras fique empacada em +100/-100: só pontua no topo quem realmente tem
+// a melhor eficiência E o maior volume dentro do próprio período.
 
 import { computeDerivedMetrics, type MetricsTotals } from "./metrics";
 
@@ -28,19 +35,17 @@ function continuousScoreInverted(value: number, badBoundary: number, goodBoundar
   return clamp(score, -1, 1);
 }
 
-export type PerformanceBreakdown = {
-  score: number | null;
-  totals: MetricsTotals;
-  ctr: number | null;
-  frequency: number | null;
-  conversationRate: number | null;
-  costPerConversation: number | null;
-};
+// Normaliza `value` dentro do intervalo [min, max] do próprio conjunto
+// (min-max scaling) para uma nota de -1 a 1.
+function relativeScore(value: number, min: number, max: number): number {
+  if (max <= min) return 0;
+  return clamp(((value - min) / (max - min)) * 2 - 1, -1, 1);
+}
 
-export function computePerformanceBreakdown(
+function efficiencyScore(
   totals: MetricsTotals,
   targetCostPerConversation: number | null | undefined
-): PerformanceBreakdown {
+): number | null {
   const derived = computeDerivedMetrics(totals);
   const scores: number[] = [];
 
@@ -59,23 +64,71 @@ export function computePerformanceBreakdown(
     );
   }
 
-  const score = scores.length === 0 ? null : Math.round((scores.reduce((sum, s) => sum + s, 0) / scores.length) * 100);
-
-  return {
-    score,
-    totals,
-    ctr: derived.ctr,
-    frequency: derived.frequency,
-    conversationRate: derived.conversationRate,
-    costPerConversation: derived.costPerConversation,
-  };
+  if (scores.length === 0) return null;
+  return scores.reduce((sum, s) => sum + s, 0) / scores.length;
 }
 
-export function computePerformanceScore(
-  totals: MetricsTotals,
+export type PerformanceBreakdown = {
+  score: number | null;
+  totals: MetricsTotals;
+  ctr: number | null;
+  frequency: number | null;
+  conversationRate: number | null;
+  costPerConversation: number | null;
+};
+
+const EFFICIENCY_WEIGHT = 0.6;
+const VOLUME_WEIGHT = 0.4;
+
+// Calcula a pontuação de cada item de um grupo (ex: todos os dias do
+// período, ou todas as campanhas), pontuando o volume de cliques/conversas
+// de cada um relativo aos demais do mesmo grupo — por isso precisa da lista
+// inteira, não de um item isolado.
+export function computePerformanceBreakdowns<T>(
+  entries: T[],
+  getTotals: (entry: T) => MetricsTotals,
   targetCostPerConversation: number | null | undefined
-): number | null {
-  return computePerformanceBreakdown(totals, targetCostPerConversation).score;
+): Map<T, PerformanceBreakdown> {
+  const totalsList = entries.map(getTotals);
+  const clicksList = totalsList.map((t) => t.linkClicks);
+  const conversationsList = totalsList.map((t) => t.conversations);
+  const minClicks = Math.min(...clicksList);
+  const maxClicks = Math.max(...clicksList);
+  const minConversations = Math.min(...conversationsList);
+  const maxConversations = Math.max(...conversationsList);
+
+  const result = new Map<T, PerformanceBreakdown>();
+
+  entries.forEach((entry, i) => {
+    const totals = totalsList[i];
+    const derived = computeDerivedMetrics(totals);
+    const eff = efficiencyScore(totals, targetCostPerConversation);
+
+    const volume =
+      entries.length > 1
+        ? (relativeScore(totals.linkClicks, minClicks, maxClicks) +
+            relativeScore(totals.conversations, minConversations, maxConversations)) /
+          2
+        : 0;
+
+    let score: number | null;
+    if (eff === null) {
+      score = null;
+    } else {
+      score = Math.round((eff * EFFICIENCY_WEIGHT + volume * VOLUME_WEIGHT) * 100);
+    }
+
+    result.set(entry, {
+      score,
+      totals,
+      ctr: derived.ctr,
+      frequency: derived.frequency,
+      conversationRate: derived.conversationRate,
+      costPerConversation: derived.costPerConversation,
+    });
+  });
+
+  return result;
 }
 
 // Gradiente de cor de acordo com a pontuação: vermelho (muito ruim) -> laranja
