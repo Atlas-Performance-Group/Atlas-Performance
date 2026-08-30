@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClient, upsertDailyMetrics } from "@/lib/data";
 import { parseMetaAdsCsv } from "@/lib/csv";
+import { getRequestIp, logEvent } from "@/lib/auditLog";
 
 export async function POST(request: Request, ctx: { params: Promise<{ clientId: string }> }) {
   const { clientId } = await ctx.params;
@@ -30,6 +31,13 @@ export async function POST(request: Request, ctx: { params: Promise<{ clientId: 
   }
 
   const { inserted, updated } = await upsertDailyMetrics(clientId, rows);
+
+  await logEvent({
+    type: "csv_imported",
+    message: `CSV importado para "${client.name}": ${rows.length} linha(s) (${inserted} nova(s), ${updated} atualizada(s)).`,
+    metadata: { clientId, clientName: client.name, rowsParsed: rows.length, inserted, updated, isDaily },
+    ip: getRequestIp(request),
+  });
 
   return NextResponse.json({
     ok: true,

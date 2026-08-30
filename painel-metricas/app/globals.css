@@ -183,6 +183,7 @@ body {
 }
 
 .semaphore-dot {
+  position: relative;
   display: inline-block;
   width: 10px;
   height: 10px;
@@ -208,6 +209,31 @@ body {
 .semaphore-neutral {
   background: var(--ink-faint);
   box-shadow: 0 0 0 3px rgba(166, 150, 141, 0.15);
+}
+
+/* Pulso "ao vivo": um anel expande e some por cima da bolinha, num loop
+   suave — sinaliza que o indicador reflete os dados atuais sem chamar
+   atenção demais. Só nos níveis com sinal real (não no neutro). */
+.semaphore-good::after,
+.semaphore-medium::after,
+.semaphore-bad::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: atlas-semaphore-pulse 2.4s ease-out infinite;
+}
+
+@keyframes atlas-semaphore-pulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
 }
 
 ::selection {
@@ -280,5 +306,12 @@ body {
   .atlas-report-content {
     animation: none !important;
     transition: none !important;
+  }
+
+  .semaphore-good::after,
+  .semaphore-medium::after,
+  .semaphore-bad::after {
+    animation: none !important;
+    display: none !important;
   }
 }

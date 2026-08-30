@@ -4,6 +4,7 @@ import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
 import { computePreviousPeriodComparison } from "@/lib/comparison";
+import { getRequestIp, logEvent } from "@/lib/auditLog";
 
 export async function GET(request: Request, ctx: { params: Promise<{ clientId: string }> }) {
   const { clientId } = await ctx.params;
@@ -48,5 +49,11 @@ export async function DELETE(request: Request, ctx: { params: Promise<{ clientId
   }
 
   const { deleted } = await deleteAllMetricsForClient(clientId);
+  await logEvent({
+    type: "metrics_reset",
+    message: `Dados de "${client.name}" foram zerados (${deleted} registro(s) apagado(s)).`,
+    metadata: { clientId, clientName: client.name, deleted },
+    ip: getRequestIp(request),
+  });
   return NextResponse.json({ ok: true, deleted });
 }

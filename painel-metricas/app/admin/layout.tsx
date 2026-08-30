@@ -26,6 +26,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/links" className="atlas-btn-secondary">
               Links de Clientes
             </Link>
+            <Link href="/admin/logs" className="atlas-btn-secondary">
+              Logs
+            </Link>
             <LogoutButton />
           </nav>
         </div>

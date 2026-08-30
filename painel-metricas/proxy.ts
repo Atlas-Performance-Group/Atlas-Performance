@@ -5,7 +5,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtectedApi =
-    pathname.startsWith("/api/clients") || pathname.startsWith("/api/links");
+    pathname.startsWith("/api/clients") || pathname.startsWith("/api/links") || pathname.startsWith("/api/logs");
   const isProtectedPage = pathname.startsWith("/admin");
 
   if (!isProtectedApi && !isProtectedPage) {
@@ -27,5 +27,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/clients/:path*", "/api/links/:path*"],
+  matcher: ["/admin/:path*", "/api/clients/:path*", "/api/links/:path*", "/api/logs/:path*"],
 };

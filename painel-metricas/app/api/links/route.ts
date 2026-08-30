@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSharedLink, getClientsByIds, listSharedLinks } from "@/lib/data";
 import { buildFrozenSnapshot } from "@/lib/reportSnapshot";
+import { getRequestIp, logEvent } from "@/lib/auditLog";
 
 export async function GET() {
   const links = await listSharedLinks();
@@ -45,6 +46,13 @@ export async function POST(request: Request) {
     visibleSections,
     mode,
     frozenSnapshot,
+  });
+
+  await logEvent({
+    type: "link_created",
+    message: `Link criado para ${clients.map((c) => c.name).join(", ")} (modo ${mode === "frozen" ? "fixo" : "ao vivo"}).`,
+    metadata: { linkId: link.id, token: link.token, clientNames: clients.map((c) => c.name), mode, dateStart, dateEnd },
+    ip: getRequestIp(request),
   });
 
   return NextResponse.json({ link }, { status: 201 });

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, listClients } from "@/lib/data";
+import { getRequestIp, logEvent } from "@/lib/auditLog";
 
 export async function GET() {
   const clients = await listClients();
@@ -20,5 +21,11 @@ export async function POST(request: Request) {
       : null;
 
   const client = await createClient({ name, businessLabel, logoUrl, targetCostPerConversation });
+  await logEvent({
+    type: "client_created",
+    message: `Cliente "${client.name}" foi criado.`,
+    metadata: { clientId: client.id, name: client.name },
+    ip: getRequestIp(request),
+  });
   return NextResponse.json({ client }, { status: 201 });
 }

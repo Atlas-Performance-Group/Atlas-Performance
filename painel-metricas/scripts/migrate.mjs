@@ -19,6 +19,7 @@ try {
   );
   await db.collection("daily_metrics").createIndex({ client_id: 1, date_start: 1 });
   await db.collection("shared_links").createIndex({ token: 1 }, { unique: true });
+  await db.collection("audit_logs").createIndex({ created_at: -1 });
 
   console.log("Índices do MongoDB criados com sucesso.");
 } catch (err) {
