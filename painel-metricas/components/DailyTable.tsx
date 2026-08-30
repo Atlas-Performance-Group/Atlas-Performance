@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { formatCurrencyBRL, formatNumber, spendWithTax } from "@/lib/metrics";
 import type { DailyRow } from "@/lib/data";
 
@@ -11,14 +14,27 @@ function formatDateLabel(row: DailyRow) {
   return s === e ? fmt(s) : `${fmt(s)} – ${fmt(e)}`;
 }
 
+const COLLAPSED_ROW_COUNT = 7;
+
 export function DailyTable({ rows }: { rows: DailyRow[] }) {
+  const [expanded, setExpanded] = useState(false);
   const hasSourceLabels = rows.some((r) => r.source_label);
+
+  const isCollapsible = rows.length > COLLAPSED_ROW_COUNT;
+  const visibleRows = expanded || !isCollapsible ? rows : rows.slice(-COLLAPSED_ROW_COUNT);
 
   return (
     <div className="atlas-card p-6 overflow-hidden">
-      <h3 className="font-display text-xl mb-4">
-        Métricas <span className="atlas-gold">Dia a Dia</span>
-      </h3>
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h3 className="font-display text-xl">
+          Métricas <span className="atlas-gold">Dia a Dia</span>
+        </h3>
+        {isCollapsible && (
+          <button type="button" className="atlas-btn-ghost text-xs" onClick={() => setExpanded((prev) => !prev)}>
+            {expanded ? "Fechar" : `Expandir (${rows.length} registros)`}
+          </button>
+        )}
+      </div>
       {rows.length === 0 ? (
         <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
           Nenhum dado importado para esse período ainda.
@@ -40,7 +56,7 @@ export function DailyTable({ rows }: { rows: DailyRow[] }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, i) => (
+              {visibleRows.map((row, i) => (
                 <tr
                   key={`${row.date_start}-${row.date_end}-${row.source_label ?? ""}-${i}`}
                   style={{ borderTop: "1px solid var(--line-soft)" }}
