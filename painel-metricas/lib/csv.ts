@@ -105,6 +105,16 @@ function looksLikeRateOrCostColumn(normalizedHeader: string): boolean {
   return RATE_OR_COST_KEYWORDS.some((keyword) => normalizedHeader.includes(keyword));
 }
 
+// Colunas que o Meta exporta mas que são detalhe de configuração da conta
+// (orçamento configurado, tipo de orçamento...), não métrica de
+// desempenho — não fazem sentido no relatório do cliente.
+const EXCLUDED_EXTRA_COLUMNS = new Set([
+  "orcamento do conjunto de anuncios",
+  "tipo de orcamento do conjunto de anuncios",
+  "orcamento da campanha",
+  "tipo de orcamento da campanha",
+]);
+
 function findColumn(
   normalizedHeaders: Map<string, string>,
   aliases: readonly string[],
@@ -278,7 +288,9 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
       colSourceLabel,
     ].filter((c): c is string => Boolean(c))
   );
-  const extraHeaders = fields.filter((f) => !knownColumns.has(f));
+  const extraHeaders = fields.filter(
+    (f) => !knownColumns.has(f) && !EXCLUDED_EXTRA_COLUMNS.has(normalizeHeader(f))
+  );
 
   const rows: ParsedRow[] = [];
   let anyRangeDiffersFromSingleDay = false;
