@@ -218,7 +218,6 @@ export type SharedLink = {
   visible_sections: {
     kpis: boolean;
     indicators: boolean;
-    chart: boolean;
     dailyEvolution: boolean;
     table: boolean;
     insights: boolean;

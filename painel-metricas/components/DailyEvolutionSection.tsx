@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { computeDerivedMetrics, formatCurrencyBRL, formatNumber, formatPercent } from "@/lib/metrics";
 import { computePerformanceBreakdowns, scoreColor } from "@/lib/performanceScore";
 import type { DailyRow } from "@/lib/data";
@@ -15,6 +16,8 @@ function emptyTotals(): MetricsTotals {
   return { spend: 0, impressions: 0, reach: 0, linkClicks: 0, conversations: 0, days: 1 };
 }
 
+const COLLAPSED_ROW_COUNT = 7;
+
 export function DailyEvolutionSection({
   rows,
   targetCostPerConversation,
@@ -22,6 +25,7 @@ export function DailyEvolutionSection({
   rows: DailyRow[];
   targetCostPerConversation: number | null;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const isDaily = rows.length > 0 && rows.every((r) => r.date_start === r.date_end);
 
   if (!isDaily) {
@@ -63,6 +67,9 @@ export function DailyEvolutionSection({
   const best = scored.length > 0 ? scored.reduce((a, b) => (b.breakdown.score! > a.breakdown.score! ? b : a)) : null;
   const worst = scored.length > 0 ? scored.reduce((a, b) => (b.breakdown.score! < a.breakdown.score! ? b : a)) : null;
   const emptyDays = dates.filter(([, totals]) => totals.spend === 0 && totals.linkClicks === 0).length;
+
+  const isCollapsible = dates.length > COLLAPSED_ROW_COUNT;
+  const visibleDates = expanded || !isCollapsible ? dates : dates.slice(-COLLAPSED_ROW_COUNT);
 
   return (
     <div className="flex flex-col gap-4">
@@ -130,7 +137,7 @@ export function DailyEvolutionSection({
               </tr>
             </thead>
             <tbody>
-              {dates.map((entry) => {
+              {visibleDates.map((entry) => {
                 const [date, totals] = entry;
                 const derived = computeDerivedMetrics(totals);
                 const breakdown = breakdowns.get(entry)!;
@@ -161,6 +168,16 @@ export function DailyEvolutionSection({
             </tbody>
           </table>
         </div>
+
+        {isCollapsible && (
+          <button
+            type="button"
+            className="atlas-btn-ghost text-xs mt-4"
+            onClick={() => setExpanded((prev) => !prev)}
+          >
+            {expanded ? "Mostrar menos" : `Mostrar todos os ${dates.length} dias`}
+          </button>
+        )}
       </div>
 
       <DailyPerformanceChart rows={rows} targetCostPerConversation={targetCostPerConversation} />

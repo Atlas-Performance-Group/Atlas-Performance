@@ -1,7 +1,6 @@
 import type { ClientReport, VisibleSections } from "@/lib/types";
 import { KpiCards } from "./KpiCards";
 import { IndicatorGrid } from "./IndicatorGrid";
-import { DailyChart } from "./DailyChart";
 import { DailyEvolutionSection } from "./DailyEvolutionSection";
 import { DailyTable } from "./DailyTable";
 import { AnalysisSection } from "./AnalysisSection";
@@ -10,7 +9,6 @@ import { ExtraMetricsCard } from "./ExtraMetricsCard";
 const DEFAULT_SECTIONS: VisibleSections = {
   kpis: true,
   indicators: true,
-  chart: true,
   dailyEvolution: true,
   table: true,
   insights: true,
@@ -28,7 +26,6 @@ export function ReportView({
       {sections.kpis && <KpiCards report={report} />}
       {sections.indicators && <IndicatorGrid report={report} />}
       {sections.indicators && <ExtraMetricsCard metrics={report.extraMetrics} />}
-      {sections.chart && <DailyChart rows={report.daily} />}
       {sections.dailyEvolution && (
         <DailyEvolutionSection
           rows={report.daily}
