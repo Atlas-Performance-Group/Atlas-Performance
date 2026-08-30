@@ -1,5 +1,5 @@
 import type { PerformanceBreakdown } from "@/lib/performanceScore";
-import { formatCurrencyBRL, formatMultiplier, formatNumber, formatPercent } from "@/lib/metrics";
+import { formatCurrencyBRL, formatMultiplier, formatNumber, formatPercent, formatSpendWithTaxNote } from "@/lib/metrics";
 
 export function PerformanceTooltipContent({ label, breakdown }: { label: string; breakdown: PerformanceBreakdown }) {
   const { score, totals, ctr, frequency, conversationRate, costPerConversation } = breakdown;
@@ -23,7 +23,7 @@ export function PerformanceTooltipContent({ label, breakdown }: { label: string;
       <ul className="flex flex-col gap-0.5 text-xs" style={{ color: "var(--ink-soft)" }}>
         <li>Cliques no link: {formatNumber(totals.linkClicks)}</li>
         <li>Conversas iniciadas: {formatNumber(totals.conversations)}</li>
-        <li>Investimento: {formatCurrencyBRL(totals.spend)}</li>
+        <li>Investimento: {formatSpendWithTaxNote(totals.spend)}</li>
         <li>CTR: {formatPercent(ctr)}</li>
         <li>Frequência: {formatMultiplier(frequency)}</li>
         <li>Taxa de conversa: {formatPercent(conversationRate)}</li>

@@ -111,6 +111,12 @@ export function spendWithTax(spend: number): number {
   return spend * (1 + AD_SPEND_TAX_RATE);
 }
 
+// "R$113,00 (+12,5%: R$127,13)" — usado em qualquer lugar que mostre um
+// valor gasto individual (linha de dia, de conjunto/campanha, tooltip).
+export function formatSpendWithTaxNote(spend: number): string {
+  return `${formatCurrencyBRL(spend)} (+12,5%: ${formatCurrencyBRL(spendWithTax(spend))})`;
+}
+
 export function formatCurrencyBRL(value: number | null): string {
   if (value === null || Number.isNaN(value)) return "—";
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

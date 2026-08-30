@@ -1,4 +1,4 @@
-import { formatCurrencyBRL, formatNumber } from "@/lib/metrics";
+import { formatCurrencyBRL, formatNumber, spendWithTax } from "@/lib/metrics";
 import type { DailyRow } from "@/lib/data";
 
 function formatDateLabel(row: DailyRow) {
@@ -33,6 +33,7 @@ export function DailyTable({ rows }: { rows: DailyRow[] }) {
                   <th className="py-2 pr-4 font-bold uppercase text-xs">Conjunto/Campanha</th>
                 )}
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Investimento</th>
+                <th className="py-2 pr-4 font-bold uppercase text-xs">Investimento + Imposto (12,5%)</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Cliques</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Conversas</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Custo/Conversa</th>
@@ -51,6 +52,7 @@ export function DailyTable({ rows }: { rows: DailyRow[] }) {
                     </td>
                   )}
                   <td className="py-2 pr-4">{formatCurrencyBRL(Number(row.spend))}</td>
+                  <td className="py-2 pr-4">{formatCurrencyBRL(spendWithTax(Number(row.spend)))}</td>
                   <td className="py-2 pr-4">{formatNumber(Number(row.link_clicks))}</td>
                   <td className="py-2 pr-4">{formatNumber(Number(row.conversations))}</td>
                   <td className="py-2 pr-4">

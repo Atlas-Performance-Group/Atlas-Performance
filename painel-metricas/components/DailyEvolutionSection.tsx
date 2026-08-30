@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { computeDerivedMetrics, formatCurrencyBRL, formatNumber, formatPercent } from "@/lib/metrics";
+import { computeDerivedMetrics, formatCurrencyBRL, formatNumber, formatPercent, formatSpendWithTaxNote, spendWithTax } from "@/lib/metrics";
 import { computePerformanceBreakdowns, scoreColor } from "@/lib/performanceScore";
 import type { DailyRow } from "@/lib/data";
 import type { MetricsTotals } from "@/lib/metrics";
@@ -92,7 +92,7 @@ export function DailyEvolutionSection({
                 <div className="font-display text-lg mt-1">{formatDateLabel(best.date)}</div>
                 <div className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
                   {formatNumber(best.breakdown.totals.conversations)} conversa(s) ·{" "}
-                  {formatCurrencyBRL(best.breakdown.totals.spend)} · pontuação {best.breakdown.score}
+                  {formatSpendWithTaxNote(best.breakdown.totals.spend)} · pontuação {best.breakdown.score}
                 </div>
               </div>
             )}
@@ -104,7 +104,7 @@ export function DailyEvolutionSection({
                 <div className="font-display text-lg mt-1">{formatDateLabel(worst.date)}</div>
                 <div className="text-xs mt-1" style={{ color: "var(--ink-soft)" }}>
                   {formatNumber(worst.breakdown.totals.conversations)} conversa(s) ·{" "}
-                  {formatCurrencyBRL(worst.breakdown.totals.spend)} · pontuação {worst.breakdown.score}
+                  {formatSpendWithTaxNote(worst.breakdown.totals.spend)} · pontuação {worst.breakdown.score}
                 </div>
               </div>
             )}
@@ -128,6 +128,7 @@ export function DailyEvolutionSection({
               <tr className="text-left" style={{ color: "var(--ink-soft)" }}>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Dia</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Investimento</th>
+                <th className="py-2 pr-4 font-bold uppercase text-xs">Investimento + Imposto (12,5%)</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Cliques</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Conversas</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">CTR</th>
@@ -145,6 +146,7 @@ export function DailyEvolutionSection({
                   <tr key={date} style={{ borderTop: "1px solid var(--line-soft)" }}>
                     <td className="py-2 pr-4">{formatDateLabel(date)}</td>
                     <td className="py-2 pr-4">{formatCurrencyBRL(totals.spend)}</td>
+                    <td className="py-2 pr-4">{formatCurrencyBRL(spendWithTax(totals.spend))}</td>
                     <td className="py-2 pr-4">{formatNumber(totals.linkClicks)}</td>
                     <td className="py-2 pr-4">{formatNumber(totals.conversations)}</td>
                     <td className="py-2 pr-4">{formatPercent(derived.ctr)}</td>
