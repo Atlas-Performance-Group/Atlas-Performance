@@ -43,6 +43,21 @@ async function sign(payload: string) {
   return toBase64Url(sig);
 }
 
+// crypto.subtle.verify compares the MAC in constant time (unlike comparing
+// two re-derived signature strings with ===, which short-circuits on the
+// first differing byte and can leak timing information about the secret).
+async function verify(payload: string, signatureB64: string) {
+  const key = await importKey();
+  const enc = new TextEncoder();
+  let sigBytes: Uint8Array;
+  try {
+    sigBytes = fromBase64Url(signatureB64);
+  } catch {
+    return false;
+  }
+  return crypto.subtle.verify("HMAC", key, sigBytes as BufferSource, enc.encode(payload));
+}
+
 export async function createSessionValue() {
   const payload = JSON.stringify({ exp: Date.now() + SESSION_TTL_MS });
   const payloadB64 = toBase64Url(new TextEncoder().encode(payload));
@@ -54,14 +69,28 @@ export async function verifySessionValue(value: string | undefined | null) {
   if (!value) return false;
   const [payloadB64, signature] = value.split(".");
   if (!payloadB64 || !signature) return false;
-  const expected = await sign(payloadB64);
-  if (expected !== signature) return false;
+  if (!(await verify(payloadB64, signature))) return false;
   try {
     const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(payloadB64)));
     return typeof payload.exp === "number" && payload.exp > Date.now();
   } catch {
     return false;
   }
+}
+
+// Constant-time string compare (XOR-accumulate every byte instead of
+// returning early on the first mismatch) — used for the admin password so a
+// network-timing attacker can't narrow it down character by character.
+export function timingSafeEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder();
+  const aBytes = enc.encode(a);
+  const bBytes = enc.encode(b);
+  const length = Math.max(aBytes.length, bBytes.length);
+  let diff = aBytes.length ^ bBytes.length;
+  for (let i = 0; i < length; i++) {
+    diff |= (aBytes[i] ?? 0) ^ (bBytes[i] ?? 0);
+  }
+  return diff === 0;
 }
 
 export const SESSION_MAX_AGE_SECONDS = SESSION_TTL_MS / 1000;

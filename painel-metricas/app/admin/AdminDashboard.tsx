@@ -17,6 +17,7 @@ export function AdminDashboard({ initialClients }: { initialClients: Client[] })
   const [range, setRange] = useState<DateRange>(() => rangeForPreset("last7"));
   const [report, setReport] = useState<ClientReport | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [reportTick, setReportTick] = useState(0);
   const loadReport = () => setReportTick((t) => t + 1);
@@ -32,12 +33,21 @@ export function AdminDashboard({ initialClients }: { initialClients: Client[] })
     if (!selectedId) return;
 
     let ignore = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on selection/range change
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- data fetch on selection/range change; also clears stale report/error from the previous client while the new one loads
     setLoading(true);
+    setReport(null);
+    setLoadError(null);
     fetch(`/api/clients/${selectedId}/metrics?start=${range.start}&end=${range.end}`)
-      .then((res) => (res.ok ? res.json() : null))
+      .then(async (res) => {
+        if (res.ok) return res.json();
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Não foi possível carregar as métricas.");
+      })
       .then((data) => {
         if (!ignore) setReport(data);
+      })
+      .catch((err: Error) => {
+        if (!ignore) setLoadError(err.message);
       })
       .finally(() => {
         if (!ignore) setLoading(false);
@@ -105,6 +115,12 @@ export function AdminDashboard({ initialClients }: { initialClients: Client[] })
           {loading && !report && (
             <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
               Carregando métricas...
+            </p>
+          )}
+
+          {loadError && !loading && (
+            <p className="text-sm font-semibold" style={{ color: "var(--red-600)" }}>
+              {loadError}
             </p>
           )}
 

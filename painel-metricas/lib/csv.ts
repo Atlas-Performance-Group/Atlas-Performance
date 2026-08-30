@@ -80,13 +80,43 @@ const ALIASES = {
   ],
 } as const;
 
-function findColumn(normalizedHeaders: Map<string, string>, aliases: readonly string[]): string | null {
+// Palavras que indicam uma coluna de razão/custo (CPC, CTR, "custo por
+// resultado"...), nunca uma contagem bruta. Usado para blindar o fallback de
+// correspondência parcial abaixo: sem isso, uma coluna como "Custo por
+// resultados" batia por substring com o alias "resultados" (de conversas) e
+// o valor em R$ virava, silenciosamente, a contagem de conversas.
+const RATE_OR_COST_KEYWORDS = [
+  "custo por",
+  "custo medio",
+  "cost per",
+  "cpc",
+  "cpm",
+  "cpa",
+  "cpl",
+  "ctr",
+  "taxa de",
+  "frequ",
+  "rate",
+  "roas",
+  "%",
+];
+
+function looksLikeRateOrCostColumn(normalizedHeader: string): boolean {
+  return RATE_OR_COST_KEYWORDS.some((keyword) => normalizedHeader.includes(keyword));
+}
+
+function findColumn(
+  normalizedHeaders: Map<string, string>,
+  aliases: readonly string[],
+  options?: { excludeRateOrCostColumns?: boolean }
+): string | null {
   for (const alias of aliases) {
     const found = normalizedHeaders.get(alias);
     if (found) return found;
   }
   // fallback: partial match
   for (const [norm, original] of normalizedHeaders) {
+    if (options?.excludeRateOrCostColumns && looksLikeRateOrCostColumn(norm)) continue;
     if (aliases.some((alias) => norm.includes(alias) || alias.includes(norm))) {
       return original;
     }
@@ -224,10 +254,10 @@ export function parseMetaAdsCsv(fileContent: string): ParseResult {
   const colDateStart = findColumn(normalizedHeaders, ALIASES.dateStart);
   const colDateEnd = findColumn(normalizedHeaders, ALIASES.dateEnd);
   const colSpend = findColumn(normalizedHeaders, ALIASES.spend);
-  const colImpressions = findColumn(normalizedHeaders, ALIASES.impressions);
-  const colReach = findColumn(normalizedHeaders, ALIASES.reach);
-  const colLinkClicks = findColumn(normalizedHeaders, ALIASES.linkClicks);
-  const colConversations = findColumn(normalizedHeaders, ALIASES.conversations);
+  const colImpressions = findColumn(normalizedHeaders, ALIASES.impressions, { excludeRateOrCostColumns: true });
+  const colReach = findColumn(normalizedHeaders, ALIASES.reach, { excludeRateOrCostColumns: true });
+  const colLinkClicks = findColumn(normalizedHeaders, ALIASES.linkClicks, { excludeRateOrCostColumns: true });
+  const colConversations = findColumn(normalizedHeaders, ALIASES.conversations, { excludeRateOrCostColumns: true });
   const colSourceLabel = findColumn(normalizedHeaders, ALIASES.sourceLabel);
 
   if (!colSpend) warnings.push("Coluna de valor gasto não encontrada — assumindo R$ 0.");

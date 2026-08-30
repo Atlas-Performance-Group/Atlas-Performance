@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionValue } from "@/lib/auth";
+import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionValue, timingSafeEqual } from "@/lib/auth";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ADMIN_PASSWORD não configurada no servidor." }, { status: 500 });
   }
 
-  if (password !== process.env.ADMIN_PASSWORD) {
+  if (!timingSafeEqual(password, process.env.ADMIN_PASSWORD)) {
     return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
   }
 
