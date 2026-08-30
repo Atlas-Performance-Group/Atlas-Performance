@@ -2,6 +2,7 @@ import type { Client, DailyRow } from "./data";
 import type { DerivedMetrics, MetricsTotals } from "./metrics";
 import type { Insight } from "./insights";
 import type { ExtraMetricAgg } from "./extraMetrics";
+import type { PeriodComparison } from "./comparison";
 
 export type VisibleSections = {
   kpis: boolean;
@@ -19,4 +20,5 @@ export type ClientReport = {
   insights: Insight[];
   daily: DailyRow[];
   extraMetrics: ExtraMetricAgg[];
+  comparison: PeriodComparison | null;
 };

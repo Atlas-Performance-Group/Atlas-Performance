@@ -88,6 +88,23 @@ export function formatRangeLabel(range: DateRange): string {
   } de ${ey}`;
 }
 
+// Período imediatamente anterior, com a mesma duração (em dias) do
+// intervalo selecionado — usado para comparar "vs. período anterior" nos
+// KPIs (ex: selecionou os últimos 7 dias, compara com os 7 dias antes
+// desses).
+export function previousPeriod(range: DateRange): DateRange {
+  const start = new Date(`${range.start}T00:00:00Z`);
+  const end = new Date(`${range.end}T00:00:00Z`);
+  const spanDays = Math.round((+end - +start) / 86400000) + 1;
+
+  const prevEnd = new Date(start);
+  prevEnd.setUTCDate(prevEnd.getUTCDate() - 1);
+  const prevStart = new Date(prevEnd);
+  prevStart.setUTCDate(prevStart.getUTCDate() - (spanDays - 1));
+
+  return { start: toISO(prevStart), end: toISO(prevEnd) };
+}
+
 export function formatDateBR(date: Date): string {
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");

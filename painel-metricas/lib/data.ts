@@ -108,39 +108,43 @@ export async function upsertDailyMetrics(clientId: string, rows: ParsedRow[]) {
   if (rows.length === 0) return { inserted: 0, updated: 0 };
 
   const col = await dailyMetricsCollection();
-  let inserted = 0;
-  let updated = 0;
   const now = new Date().toISOString();
 
-  for (const row of rows) {
-    const filter = {
-      client_id: clientId,
-      date_start: row.dateStart,
-      date_end: row.dateEnd,
-      source_label: row.sourceLabel,
-    };
-    const existing = await col.findOne(filter, { projection: { _id: 1 } });
-    await col.updateOne(
-      filter,
-      {
-        $set: {
-          spend: row.spend,
-          impressions: row.impressions,
-          reach: row.reach,
-          link_clicks: row.linkClicks,
-          conversations: row.conversations,
-          extra: row.extra,
-          updated_at: now,
+  // Uma única ida ao banco para todas as linhas, em vez de um
+  // findOne + updateOne por linha (que fazia 2 round-trips por linha —
+  // lento para CSVs grandes com muitos dias/conjuntos de anúncios).
+  const result = await col.bulkWrite(
+    rows.map((row) => {
+      const filter = {
+        client_id: clientId,
+        date_start: row.dateStart,
+        date_end: row.dateEnd,
+        source_label: row.sourceLabel,
+      };
+      return {
+        updateOne: {
+          filter,
+          update: {
+            $set: {
+              spend: row.spend,
+              impressions: row.impressions,
+              reach: row.reach,
+              link_clicks: row.linkClicks,
+              conversations: row.conversations,
+              extra: row.extra,
+              updated_at: now,
+            },
+            $setOnInsert: { _id: nanoid(), created_at: now },
+          },
+          upsert: true,
         },
-        $setOnInsert: { _id: nanoid(), created_at: now },
-      },
-      { upsert: true }
-    );
-    if (existing) updated++;
-    else inserted++;
-  }
+      };
+    }),
+    { ordered: false }
+  );
 
-  return { inserted, updated };
+  const inserted = result.upsertedCount ?? 0;
+  return { inserted, updated: rows.length - inserted };
 }
 
 export async function deleteAllMetricsForClient(clientId: string): Promise<{ deleted: number }> {

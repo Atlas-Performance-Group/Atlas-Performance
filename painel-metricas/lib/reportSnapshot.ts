@@ -2,6 +2,7 @@ import { getMetricsInRange, sumRows, type Client } from "./data";
 import { computeDerivedMetrics } from "./metrics";
 import { generateInsights } from "./insights";
 import { aggregateExtraMetrics } from "./extraMetrics";
+import { computePreviousPeriodComparison } from "./comparison";
 
 // Snapshot usado pelos links "fixos" (frozen): congela os números do
 // momento da criação/edição do link, em vez de recalcular a cada acesso.
@@ -13,7 +14,8 @@ export async function buildFrozenSnapshot(clients: Client[], dateStart: string, 
       const derived = computeDerivedMetrics(totals);
       const insights = generateInsights(totals);
       const extraMetrics = aggregateExtraMetrics(rows);
-      return { clientId: client.id, totals, derived, insights, daily: rows, extraMetrics };
+      const comparison = await computePreviousPeriodComparison(client.id, { start: dateStart, end: dateEnd });
+      return { clientId: client.id, totals, derived, insights, daily: rows, extraMetrics, comparison };
     })
   );
   return { generatedAt: new Date().toISOString(), data };

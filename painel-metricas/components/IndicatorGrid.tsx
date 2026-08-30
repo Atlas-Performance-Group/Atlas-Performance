@@ -1,5 +1,6 @@
 import {
   ctrStatus,
+  cpcStatus,
   frequencyStatus,
   conversationRateStatus,
   costPerConversationStatus,
@@ -17,7 +18,7 @@ export function IndicatorGrid({ report }: { report: ClientReport }) {
   const { totals, derived, client } = report;
 
   const items: { label: string; value: string; level?: SemaphoreLevel }[] = [
-    { label: "CPC", value: formatCurrencyBRL(derived.cpc) },
+    { label: "CPC", value: formatCurrencyBRL(derived.cpc), level: cpcStatus(derived.cpc) },
     { label: "CTR", value: formatPercent(derived.ctr), level: ctrStatus(derived.ctr) },
     { label: "CPM", value: formatCurrencyBRL(derived.cpm) },
     { label: "Impressões", value: formatNumber(totals.impressions) },

@@ -6,6 +6,8 @@ export function AddClientForm({ onCreated }: { onCreated: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [businessLabel, setBusinessLabel] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [targetCostPerConversation, setTargetCostPerConversation] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -14,10 +16,16 @@ export function AddClientForm({ onCreated }: { onCreated: () => void }) {
     setLoading(true);
     setError(null);
     try {
+      const target = parseFloat(targetCostPerConversation.replace(",", "."));
       const res = await fetch("/api/clients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, businessLabel }),
+        body: JSON.stringify({
+          name,
+          businessLabel,
+          logoUrl: logoUrl || null,
+          targetCostPerConversation: Number.isFinite(target) && target > 0 ? target : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -26,6 +34,8 @@ export function AddClientForm({ onCreated }: { onCreated: () => void }) {
       }
       setName("");
       setBusinessLabel("");
+      setLogoUrl("");
+      setTargetCostPerConversation("");
       setOpen(false);
       onCreated();
     } finally {
@@ -55,6 +65,21 @@ export function AddClientForm({ onCreated }: { onCreated: () => void }) {
         className="atlas-input"
         value={businessLabel}
         onChange={(e) => setBusinessLabel(e.target.value)}
+      />
+      <input
+        type="url"
+        placeholder="URL da logo do cliente (opcional)"
+        className="atlas-input"
+        value={logoUrl}
+        onChange={(e) => setLogoUrl(e.target.value)}
+      />
+      <input
+        type="text"
+        inputMode="decimal"
+        placeholder="Meta de custo por conversa em R$ (opcional)"
+        className="atlas-input"
+        value={targetCostPerConversation}
+        onChange={(e) => setTargetCostPerConversation(e.target.value)}
       />
       {error && (
         <p className="text-sm font-semibold" style={{ color: "var(--red-600)" }}>

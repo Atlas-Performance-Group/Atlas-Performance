@@ -3,6 +3,7 @@ import { deleteAllMetricsForClient, getClient, getMetricsInRange, sumRows } from
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
+import { computePreviousPeriodComparison } from "@/lib/comparison";
 
 export async function GET(request: Request, ctx: { params: Promise<{ clientId: string }> }) {
   const { clientId } = await ctx.params;
@@ -24,6 +25,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ clientId: s
   const derived = computeDerivedMetrics(totals);
   const insights = generateInsights(totals);
   const extraMetrics = aggregateExtraMetrics(rows);
+  const comparison = await computePreviousPeriodComparison(clientId, { start, end });
 
   return NextResponse.json({
     client,
@@ -33,6 +35,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ clientId: s
     insights,
     daily: rows,
     extraMetrics,
+    comparison,
   });
 }
 

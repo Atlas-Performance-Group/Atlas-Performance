@@ -22,6 +22,14 @@ export type DerivedMetrics = {
   conversationsPerDay: number | null;
 };
 
+// Variação percentual entre o valor atual e o anterior (usada para o "vs.
+// período anterior" nos KPIs). null quando não dá para calcular.
+export function percentDelta(current: number | null, previous: number | null): number | null {
+  if (current === null || previous === null) return null;
+  if (previous === 0) return current === 0 ? 0 : null;
+  return ((current - previous) / previous) * 100;
+}
+
 function safeDiv(a: number, b: number): number | null {
   if (!b) return null;
   return a / b;
@@ -56,6 +64,16 @@ export function ctrStatus(ctr: number | null): SemaphoreLevel {
   if (ctr === null) return "neutral";
   if (ctr >= 1.5) return "good";
   if (ctr >= 0.8) return "medium";
+  return "bad";
+}
+
+// Referência geral de mercado para CPC (custo por clique) em campanhas
+// brasileiras no Meta Ads — assim como CTR/frequência/taxa de conversa, é
+// um limiar fixo (ajuste aqui se o benchmark da agência mudar).
+export function cpcStatus(cpc: number | null): SemaphoreLevel {
+  if (cpc === null) return "neutral";
+  if (cpc <= 1) return "good";
+  if (cpc <= 2) return "medium";
   return "bad";
 }
 
