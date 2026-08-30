@@ -2,12 +2,15 @@
 
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { DailyRow } from "@/lib/data";
-import { computePerformanceScore } from "@/lib/performanceScore";
+import { computePerformanceBreakdown, scoreColor, type PerformanceBreakdown } from "@/lib/performanceScore";
 import type { MetricsTotals } from "@/lib/metrics";
+import { PerformanceTooltipContent } from "./PerformanceTooltip";
 
 function emptyTotals(): MetricsTotals {
   return { spend: 0, impressions: 0, reach: 0, linkClicks: 0, conversations: 0, days: 1 };
 }
+
+type DataPoint = { label: string; score: number; breakdown: PerformanceBreakdown };
 
 export function CampaignPerformanceChart({
   rows,
@@ -30,11 +33,11 @@ export function CampaignPerformanceChart({
 
   if (bySource.size === 0) return null;
 
-  const data = [...bySource.entries()]
-    .map(([label, totals]) => ({
-      label,
-      score: computePerformanceScore(totals, targetCostPerConversation) ?? 0,
-    }))
+  const data: DataPoint[] = [...bySource.entries()]
+    .map(([label, totals]) => {
+      const breakdown = computePerformanceBreakdown(totals, targetCostPerConversation);
+      return { label, score: breakdown.score ?? 0, breakdown };
+    })
     .sort((a, b) => b.score - a.score);
 
   return (
@@ -44,7 +47,7 @@ export function CampaignPerformanceChart({
       </h3>
       <p className="text-xs mb-4" style={{ color: "var(--ink-faint)" }}>
         Mesma pontuação de -100 a 100, comparando cada conjunto de anúncios ou campanha no período
-        selecionado.
+        selecionado. Passe o mouse em uma barra para ver o porquê da pontuação.
       </p>
       <div style={{ width: "100%", height: Math.max(160, data.length * 44) }}>
         <ResponsiveContainer>
@@ -64,17 +67,15 @@ export function CampaignPerformanceChart({
             />
             <ReferenceLine x={0} stroke="#c9bfa8" />
             <Tooltip
-              formatter={(value) => [value, "Pontuação"]}
-              contentStyle={{
-                background: "#fffdf7",
-                border: "1px solid #f1e8d8",
-                borderRadius: 10,
-                fontSize: 13,
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const point = payload[0].payload as DataPoint;
+                return <PerformanceTooltipContent label={point.label} breakdown={point.breakdown} />;
               }}
             />
             <Bar dataKey="score" radius={[4, 4, 4, 4]} animationDuration={700} animationEasing="ease-out">
               {data.map((entry, i) => (
-                <Cell key={i} fill={entry.score >= 0 ? "#2fa64c" : "#c00000"} />
+                <Cell key={i} fill={scoreColor(entry.score)} />
               ))}
             </Bar>
           </BarChart>
