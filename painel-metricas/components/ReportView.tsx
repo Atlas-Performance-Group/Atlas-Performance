@@ -3,7 +3,7 @@ import { KpiCards } from "./KpiCards";
 import { IndicatorGrid } from "./IndicatorGrid";
 import { DailyChart } from "./DailyChart";
 import { DailyTable } from "./DailyTable";
-import { InsightsList } from "./InsightsList";
+import { AnalysisSection } from "./AnalysisSection";
 import { ExtraMetricsCard } from "./ExtraMetricsCard";
 
 const DEFAULT_SECTIONS: VisibleSections = {
@@ -28,7 +28,7 @@ export function ReportView({
       {sections.indicators && <ExtraMetricsCard metrics={report.extraMetrics} />}
       {sections.chart && <DailyChart rows={report.daily} />}
       {sections.table && <DailyTable rows={report.daily} />}
-      {sections.insights && <InsightsList insights={report.insights} />}
+      {sections.insights && <AnalysisSection report={report} />}
     </div>
   );
 }
