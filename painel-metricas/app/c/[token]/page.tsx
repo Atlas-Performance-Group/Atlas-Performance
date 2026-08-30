@@ -90,7 +90,7 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="atlas-hero px-6 py-8">
+      <header className="atlas-hero px-6 py-8 atlas-fade-in">
         <div className="max-w-5xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <AtlasLogo size="md" />
         </div>

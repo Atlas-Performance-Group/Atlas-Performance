@@ -60,6 +60,12 @@ body {
   border-radius: 20px;
   box-shadow: 0 10px 30px -12px rgba(33, 0, 0, 0.25);
   border: 1px solid var(--line-soft);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.atlas-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -14px rgba(33, 0, 0, 0.32);
 }
 
 .atlas-gold {
@@ -72,12 +78,18 @@ body {
   font-weight: 800;
   border-radius: 12px;
   padding: 0.65rem 1.25rem;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   box-shadow: 0 6px 16px -6px rgba(224, 134, 0, 0.6);
 }
 
 .atlas-btn-primary:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -6px rgba(224, 134, 0, 0.7);
+}
+
+.atlas-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 10px -4px rgba(224, 134, 0, 0.6);
 }
 
 .atlas-btn-primary:disabled {
@@ -93,6 +105,12 @@ body {
   border-radius: 12px;
   padding: 0.6rem 1.1rem;
   font-weight: 700;
+  transition: background 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.atlas-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
 }
 
 .atlas-btn-ghost {
@@ -102,11 +120,13 @@ body {
   border-radius: 12px;
   padding: 0.5rem 0.9rem;
   font-weight: 700;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .atlas-btn-ghost:hover {
   border-color: var(--gold-500);
   color: var(--ink);
+  transform: translateY(-1px);
 }
 
 .atlas-input {
@@ -116,6 +136,7 @@ body {
   padding: 0.55rem 0.75rem;
   color: var(--ink);
   font-family: var(--font-manrope);
+  transition: outline-color 0.2s ease, border-color 0.2s ease;
 }
 
 .atlas-input:focus {
@@ -154,4 +175,72 @@ body {
 ::selection {
   background: var(--gold-400);
   color: var(--red-950);
+}
+
+/* Animações */
+
+@keyframes atlas-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes atlas-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.atlas-stagger > * {
+  animation: atlas-fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.atlas-stagger > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.atlas-stagger > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.atlas-stagger > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.atlas-stagger > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.atlas-stagger > *:nth-child(n + 5) {
+  animation-delay: 0.26s;
+}
+
+.atlas-fade-in {
+  animation: atlas-fade-in 0.4s ease both;
+}
+
+.atlas-report-content {
+  transition: opacity 0.25s ease;
+}
+
+.atlas-report-content[data-loading="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-stagger > *,
+  .atlas-fade-in,
+  .atlas-card,
+  .atlas-btn-primary,
+  .atlas-btn-secondary,
+  .atlas-btn-ghost,
+  .atlas-report-content {
+    animation: none !important;
+    transition: none !important;
+  }
 }

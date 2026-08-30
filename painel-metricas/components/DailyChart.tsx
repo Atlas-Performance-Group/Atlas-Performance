@@ -71,8 +71,24 @@ export function DailyChart({ rows }: { rows: DailyRow[] }) {
               }}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Area type="monotone" dataKey="Cliques" stroke="#c00000" fill="url(#clicksGradient)" strokeWidth={2} />
-            <Area type="monotone" dataKey="Conversas" stroke="#e08600" fill="url(#convGradient)" strokeWidth={2} />
+            <Area
+              type="monotone"
+              dataKey="Cliques"
+              stroke="#c00000"
+              fill="url(#clicksGradient)"
+              strokeWidth={2}
+              animationDuration={700}
+              animationEasing="ease-out"
+            />
+            <Area
+              type="monotone"
+              dataKey="Conversas"
+              stroke="#e08600"
+              fill="url(#convGradient)"
+              strokeWidth={2}
+              animationDuration={700}
+              animationEasing="ease-out"
+            />
           </AreaChart>
         </ResponsiveContainer>
       </div>

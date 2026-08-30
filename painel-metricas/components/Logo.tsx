@@ -1,10 +1,12 @@
 export function AtlasLogo({ size = "md" }: { size?: "sm" | "md" | "lg" }) {
-  const sizes = { sm: "text-lg", md: "text-2xl", lg: "text-4xl" } as const;
+  const heights = { sm: "h-8", md: "h-11", lg: "h-16" } as const;
   return (
-    <div className={`font-display ${sizes[size]} leading-none flex items-baseline gap-1`}>
-      <span style={{ color: "#fff8ec" }}>ATLAS</span>
-      <span className="atlas-gold">PERFORMANCE</span>
-    </div>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/atlas-logo.webp"
+      alt="Atlas Performance Group"
+      className={`${heights[size]} w-auto object-contain`}
+    />
   );
 }
 

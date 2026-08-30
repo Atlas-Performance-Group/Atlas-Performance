@@ -64,6 +64,7 @@ export function AdminDashboard({ initialClients }: { initialClients: Client[] })
                 background: selectedId === c.id ? "var(--red-brand)" : "transparent",
                 color: selectedId === c.id ? "#fff8ec" : "var(--ink-soft)",
                 border: `1px solid ${selectedId === c.id ? "var(--red-brand)" : "var(--line-soft)"}`,
+                transition: "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)",
               }}
             >
               {c.name}
@@ -101,13 +102,17 @@ export function AdminDashboard({ initialClients }: { initialClients: Client[] })
             </div>
           </div>
 
-          {loading && (
+          {loading && !report && (
             <p className="text-sm" style={{ color: "var(--ink-soft)" }}>
               Carregando métricas...
             </p>
           )}
 
-          {report && !loading && <ReportView report={report} />}
+          {report && (
+            <div className="atlas-report-content" data-loading={loading}>
+              <ReportView key={`${selectedClient.id}-${range.start}-${range.end}`} report={report} />
+            </div>
+          )}
         </>
       )}
 
