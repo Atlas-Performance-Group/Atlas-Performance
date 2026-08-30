@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionValue } from "./lib/auth";
+import { getRequestIp, logEvent } from "./lib/auditLog";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -16,6 +17,16 @@ export async function proxy(request: NextRequest) {
   const valid = await verifySessionValue(cookie);
 
   if (valid) return NextResponse.next();
+
+  // Alguém tentou acessar uma rota protegida (painel admin ou API interna)
+  // sem sessão válida — ex: um cliente tentando adivinhar /admin a partir
+  // do link público. Fica registrado no /admin/logs.
+  await logEvent({
+    type: "unauthorized_access_attempt",
+    message: `Tentativa de acessar "${pathname}" sem estar autenticado.`,
+    metadata: { pathname },
+    ip: getRequestIp(request),
+  });
 
   if (isProtectedApi) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });

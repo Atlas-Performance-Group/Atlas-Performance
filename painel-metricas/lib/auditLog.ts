@@ -10,6 +10,7 @@ export type AuditLogType =
   | "login_success"
   | "login_failure"
   | "logout"
+  | "unauthorized_access_attempt"
   | "client_created"
   | "csv_imported"
   | "metrics_reset"
