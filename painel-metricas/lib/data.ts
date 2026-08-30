@@ -277,6 +277,43 @@ export async function getSharedLinkByToken(token: string): Promise<SharedLink | 
   return doc ? toSharedLink(doc) : null;
 }
 
+export async function getSharedLinkById(id: string): Promise<SharedLink | null> {
+  const col = await sharedLinksCollection();
+  const doc = await col.findOne({ _id: id });
+  return doc ? toSharedLink(doc) : null;
+}
+
+export async function updateSharedLink(
+  id: string,
+  input: {
+    label?: string | null;
+    clientIds: string[];
+    dateStart: string;
+    dateEnd: string;
+    visibleSections: SharedLink["visible_sections"];
+    mode: "frozen" | "live";
+    frozenSnapshot?: unknown;
+  }
+): Promise<SharedLink | null> {
+  const col = await sharedLinksCollection();
+  await col.updateOne(
+    { _id: id },
+    {
+      $set: {
+        label: input.label ?? null,
+        client_ids: input.clientIds,
+        date_start: input.dateStart,
+        date_end: input.dateEnd,
+        visible_sections: input.visibleSections,
+        mode: input.mode,
+        frozen_snapshot: input.mode === "frozen" ? input.frozenSnapshot ?? null : null,
+      },
+    }
+  );
+  const doc = await col.findOne({ _id: id });
+  return doc ? toSharedLink(doc) : null;
+}
+
 export async function revokeSharedLink(id: string) {
   const col = await sharedLinksCollection();
   await col.updateOne({ _id: id, revoked_at: null }, { $set: { revoked_at: new Date().toISOString() } });

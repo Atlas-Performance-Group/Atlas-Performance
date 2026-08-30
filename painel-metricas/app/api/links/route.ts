@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { createSharedLink, getClientsByIds, getMetricsInRange, listSharedLinks, sumRows } from "@/lib/data";
-import { computeDerivedMetrics } from "@/lib/metrics";
-import { generateInsights } from "@/lib/insights";
-import { aggregateExtraMetrics } from "@/lib/extraMetrics";
+import { createSharedLink, getClientsByIds, listSharedLinks } from "@/lib/data";
+import { buildFrozenSnapshot } from "@/lib/reportSnapshot";
 
 export async function GET() {
   const links = await listSharedLinks();
@@ -37,20 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Nenhum cliente válido encontrado." }, { status: 404 });
   }
 
-  let frozenSnapshot: unknown = undefined;
-  if (mode === "frozen") {
-    const snapshotData = await Promise.all(
-      clients.map(async (client) => {
-        const rows = await getMetricsInRange(client.id, dateStart, dateEnd);
-        const totals = sumRows(rows, dateStart, dateEnd);
-        const derived = computeDerivedMetrics(totals);
-        const insights = generateInsights(totals);
-        const extraMetrics = aggregateExtraMetrics(rows);
-        return { clientId: client.id, totals, derived, insights, daily: rows, extraMetrics };
-      })
-    );
-    frozenSnapshot = { generatedAt: new Date().toISOString(), data: snapshotData };
-  }
+  const frozenSnapshot = mode === "frozen" ? await buildFrozenSnapshot(clients, dateStart, dateEnd) : undefined;
 
   const link = await createSharedLink({
     label,

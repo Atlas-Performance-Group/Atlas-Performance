@@ -4,11 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Client, SharedLink } from "@/lib/data";
 import { formatRangeLabel } from "@/lib/dateRanges";
+import { LinkDetailsModal } from "@/components/LinkDetailsModal";
 
 export function LinksTable({ links, clients }: { links: SharedLink[]; clients: Client[] }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [detailsLink, setDetailsLink] = useState<SharedLink | null>(null);
   const [baseUrl] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
 
   function clientNames(ids: string[]) {
@@ -130,6 +132,13 @@ export function LinksTable({ links, clients }: { links: SharedLink[]; clients: C
                       <button
                         type="button"
                         className="atlas-btn-ghost text-xs"
+                        onClick={() => setDetailsLink(link)}
+                      >
+                        Detalhes
+                      </button>
+                      <button
+                        type="button"
+                        className="atlas-btn-ghost text-xs"
                         disabled={pendingId === link.id}
                         onClick={() => toggleRevoke(link)}
                       >
@@ -152,6 +161,16 @@ export function LinksTable({ links, clients }: { links: SharedLink[]; clients: C
           })}
         </tbody>
       </table>
+
+      {detailsLink && (
+        <LinkDetailsModal
+          link={detailsLink}
+          clients={clients}
+          baseUrl={baseUrl}
+          onClose={() => setDetailsLink(null)}
+          onSaved={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }
