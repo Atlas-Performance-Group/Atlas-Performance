@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     kpis: Boolean(body.visibleSections?.kpis ?? true),
     indicators: Boolean(body.visibleSections?.indicators ?? true),
     chart: Boolean(body.visibleSections?.chart ?? true),
+    dailyEvolution: Boolean(body.visibleSections?.dailyEvolution ?? true),
     table: Boolean(body.visibleSections?.table ?? true),
     insights: Boolean(body.visibleSections?.insights ?? true),
   };

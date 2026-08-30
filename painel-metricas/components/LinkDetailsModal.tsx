@@ -12,6 +12,7 @@ const SECTION_LABELS: { key: keyof VisibleSections; label: string }[] = [
   { key: "kpis", label: "KPIs principais" },
   { key: "indicators", label: "Indicadores detalhados" },
   { key: "chart", label: "Gráfico de evolução diária" },
+  { key: "dailyEvolution", label: "Evolução diária (detalhamento por dia)" },
   { key: "table", label: "Tabela dia a dia" },
   { key: "insights", label: "Análise e recomendações" },
 ];

@@ -8,6 +8,7 @@ export type VisibleSections = {
   kpis: boolean;
   indicators: boolean;
   chart: boolean;
+  dailyEvolution: boolean;
   table: boolean;
   insights: boolean;
 };
