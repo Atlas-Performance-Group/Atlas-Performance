@@ -286,3 +286,8 @@ export async function reactivateSharedLink(id: string) {
   const col = await sharedLinksCollection();
   await col.updateOne({ _id: id }, { $set: { revoked_at: null } });
 }
+
+export async function deleteSharedLink(id: string) {
+  const col = await sharedLinksCollection();
+  await col.deleteOne({ _id: id });
+}

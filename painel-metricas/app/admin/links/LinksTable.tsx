@@ -8,6 +8,7 @@ import { formatRangeLabel } from "@/lib/dateRanges";
 export function LinksTable({ links, clients }: { links: SharedLink[]; clients: Client[] }) {
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [baseUrl] = useState(() => (typeof window !== "undefined" ? window.location.origin : ""));
 
   function clientNames(ids: string[]) {
@@ -24,6 +25,17 @@ export function LinksTable({ links, clients }: { links: SharedLink[]; clients: C
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: link.revoked_at ? "reactivate" : "revoke" }),
       });
+      router.refresh();
+    } finally {
+      setPendingId(null);
+    }
+  }
+
+  async function handleDelete(id: string) {
+    setPendingId(id);
+    try {
+      await fetch(`/api/links/${id}`, { method: "DELETE" });
+      setConfirmDeleteId(null);
       router.refresh();
     } finally {
       setPendingId(null);
@@ -56,6 +68,7 @@ export function LinksTable({ links, clients }: { links: SharedLink[]; clients: C
           {links.map((link) => {
             const url = `${baseUrl}/c/${link.token}`;
             const revoked = Boolean(link.revoked_at);
+            const confirming = confirmDeleteId === link.id;
             return (
               <tr key={link.id} style={{ borderTop: "1px solid var(--line-soft)" }}>
                 <td className="py-2 pr-4">
@@ -90,14 +103,49 @@ export function LinksTable({ links, clients }: { links: SharedLink[]; clients: C
                   </span>
                 </td>
                 <td className="py-2 pr-4">
-                  <button
-                    type="button"
-                    className="atlas-btn-ghost text-xs"
-                    disabled={pendingId === link.id}
-                    onClick={() => toggleRevoke(link)}
-                  >
-                    {revoked ? "Reativar" : "Revogar"}
-                  </button>
+                  {confirming ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs" style={{ color: "var(--red-600)" }}>
+                        Excluir de vez?
+                      </span>
+                      <button
+                        type="button"
+                        className="atlas-btn-ghost text-xs"
+                        style={{ color: "var(--red-600)", borderColor: "var(--red-600)" }}
+                        disabled={pendingId === link.id}
+                        onClick={() => handleDelete(link.id)}
+                      >
+                        {pendingId === link.id ? "Excluindo..." : "Sim, excluir"}
+                      </button>
+                      <button
+                        type="button"
+                        className="atlas-btn-ghost text-xs"
+                        onClick={() => setConfirmDeleteId(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="atlas-btn-ghost text-xs"
+                        disabled={pendingId === link.id}
+                        onClick={() => toggleRevoke(link)}
+                      >
+                        {revoked ? "Reativar" : "Revogar"}
+                      </button>
+                      <button
+                        type="button"
+                        className="atlas-btn-ghost text-xs"
+                        style={{ color: "var(--red-600)" }}
+                        disabled={pendingId === link.id}
+                        onClick={() => setConfirmDeleteId(link.id)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             );

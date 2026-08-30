@@ -52,6 +52,46 @@ body {
 .atlas-hero {
   background: radial-gradient(circle at top, var(--red-600), var(--red-950) 85%);
   color: #fff8ec;
+  position: relative;
+  overflow: hidden;
+}
+
+.atlas-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52' viewBox='0 0 60 52'%3E%3Cpolygon points='30,0 60,52 0,52' fill='rgba(255,255,255,0.04)'/%3E%3C/svg%3E");
+  background-size: 60px 52px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.atlas-hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.atlas-hero-divider {
+  width: 56px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--gold-400);
+  margin: 0.85rem auto 0;
+}
+
+.atlas-hero-badge {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff8ec;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
 }
 
 .atlas-card {

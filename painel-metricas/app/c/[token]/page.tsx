@@ -2,7 +2,7 @@ import { getClientsByIds, getMetricsInRange, getSharedLinkByToken, sumRows } fro
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
-import { formatRangeLabel } from "@/lib/dateRanges";
+import { formatDateBR, formatRangeLabel } from "@/lib/dateRanges";
 import { AtlasLogo, ClientLogo } from "@/components/Logo";
 import { ReportView } from "@/components/ReportView";
 import type { ClientReport } from "@/lib/types";
@@ -40,9 +40,11 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
   }
 
   let reports: ClientReport[];
+  let generatedAt = new Date();
 
   if (link.mode === "frozen" && link.frozen_snapshot) {
     const snapshot = link.frozen_snapshot as {
+      generatedAt?: string;
       data: {
         clientId: string;
         totals: ClientReport["totals"];
@@ -67,6 +69,7 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
         } satisfies ClientReport;
       })
       .filter((r): r is ClientReport => r !== null);
+    if (snapshot.generatedAt) generatedAt = new Date(snapshot.generatedAt);
   } else {
     reports = await Promise.all(
       clients.map(async (client) => {
@@ -90,11 +93,13 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="atlas-hero px-6 py-8 atlas-fade-in">
-        <div className="max-w-5xl mx-auto flex items-center justify-between flex-wrap gap-4">
+      <header className="atlas-hero px-6 py-10 atlas-fade-in text-center">
+        <span className="atlas-hero-badge">Gerado em {formatDateBR(generatedAt)}</span>
+        <div className="max-w-5xl mx-auto flex items-center justify-center">
           <AtlasLogo size="md" />
         </div>
-        <h1 className="max-w-5xl mx-auto font-display text-3xl mt-6">
+        <div className="atlas-hero-divider" />
+        <h1 className="max-w-5xl mx-auto font-display text-3xl mt-4">
           MÉTRICAS <span className="atlas-gold">ATLAS</span>
         </h1>
         <p className="max-w-5xl mx-auto text-sm mt-1" style={{ color: "#ffe6a3" }}>
