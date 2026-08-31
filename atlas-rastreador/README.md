@@ -80,9 +80,10 @@ fetch("https://<url-do-atlas-rastreador>/api/ingest", {
 - `/painel/historico` — tabela pesquisável/ordenável/filtrável de todos
   os IPs, com exportação CSV
 - `/painel/ip/[ip]` — "Localização do IP": resumo, localização com mapa,
-  rede/organização, segurança (VPN/proxy/Tor/hosting quando disponível),
-  histórico de acessos (com o sistema de origem de cada evento) e botão de
-  relatório para download
+  rede/organização, segurança (VPN/proxy/Tor/hosting, reputação e
+  denúncias via AbuseIPDB quando `ABUSEIPDB_API_KEY` configurada, reverse
+  DNS), gráfico de padrão de acesso por horário, histórico de acessos (com
+  o sistema de origem de cada evento) e botão de relatório para download
 - `/painel/logs` — log de atividade administrativa (logins, consultas,
   relatórios gerados)
 

@@ -25,6 +25,9 @@ export function blankResult(ip: string, provider: string): IPGeoResult {
     is_hosting: null,
     is_datacenter: null,
     abuse_score: null,
+    abuse_reports_count: null,
+    abuse_is_whitelisted: null,
+    reverse_dns: null,
     raw_ok: false,
     error: null,
   };

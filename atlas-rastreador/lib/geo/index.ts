@@ -6,6 +6,8 @@ import { getDb } from "../db";
 import type { IPGeoResult, IPGeolocationProvider } from "./types";
 import { IpApiProvider } from "./providers/ipapi";
 import { IpInfoProvider } from "./providers/ipinfo";
+import { enrichWithAbuseIpDb } from "./enrich/abuseipdb";
+import { reverseDnsLookup } from "./reverseDns";
 
 type GeoCacheDoc = IPGeoResult & { _id: string; cached_at: string };
 
@@ -60,6 +62,10 @@ export async function resolveIpGeo(ip: string, opts?: { skipCache?: boolean }): 
     const result = await provider.lookup(ip);
     last = result;
     if (result.raw_ok) {
+      // Enriquecimentos opcionais — nunca bloqueiam nem derrubam a consulta
+      // principal se falharem (AbuseIPDB sem chave configurada, DNS sem
+      // PTR, timeout, etc.).
+      await Promise.all([enrichWithAbuseIpDb(ip, result), reverseDnsLookup(ip).then((h) => (result.reverse_dns = h))]);
       await setCached(ip, result);
       return result;
     }

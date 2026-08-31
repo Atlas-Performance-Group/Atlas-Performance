@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { IPGeoResult } from "@/lib/geo/types";
 import type { IpAccessEvent, IpRecord } from "@/lib/ipTracking";
 import { RISK_LABELS } from "@/lib/risk";
@@ -46,6 +47,38 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <h3 className="font-display text-lg">{title}</h3>
       {children}
     </div>
+  );
+}
+
+const HOUR_LABELS = Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}h`);
+
+// Distribuição de acessos por hora do dia (fuso do navegador de quem está
+// olhando o painel) — ajuda a notar padrão, ex: sempre de madrugada.
+// Calculado a partir do próprio histórico já carregado, sem endpoint novo.
+function AccessPatternChart({ history }: { history: IpAccessEvent[] }) {
+  if (history.length === 0) return null;
+
+  const counts = new Array(24).fill(0);
+  for (const h of history) {
+    counts[new Date(h.created_at).getHours()]++;
+  }
+  const data = HOUR_LABELS.map((hour, i) => ({ hour, count: counts[i] }));
+
+  return (
+    <Section title="Padrão de acesso por horário">
+      <p className="text-xs" style={{ color: "var(--ink-faint)" }}>
+        Distribuição dos últimos {history.length} acesso(s) registrados por hora do dia (horário do seu navegador).
+      </p>
+      <ResponsiveContainer width="100%" height={200}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--line-soft)" />
+          <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={2} />
+          <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+          <Tooltip />
+          <Bar dataKey="count" fill="var(--red-600)" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </Section>
   );
 }
 
@@ -179,8 +212,18 @@ export function IpDetailView({
           <BoolField label="Hosting" value={geo.is_hosting} />
           <BoolField label="Data center" value={geo.is_datacenter} />
           <Field label="Indicador de reputação/abuso" value={geo.abuse_score !== null ? `${geo.abuse_score}/100` : "Não disponível"} />
+          <Field label="Denúncias registradas (AbuseIPDB)" value={geo.abuse_reports_count} />
+          <BoolField label="Whitelist (AbuseIPDB)" value={geo.abuse_is_whitelisted} />
+          <Field label="Reverse DNS (hostname)" value={geo.reverse_dns} />
         </div>
+        {geo.abuse_reports_count === null && (
+          <p className="text-xs" style={{ color: "var(--ink-faint)" }}>
+            Denúncias e whitelist do AbuseIPDB só aparecem com a variável ABUSEIPDB_API_KEY configurada no servidor.
+          </p>
+        )}
       </Section>
+
+      <AccessPatternChart history={history} />
 
       {/* HISTÓRICO */}
       <Section title="Histórico de acessos aos nossos sistemas">

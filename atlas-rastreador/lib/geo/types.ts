@@ -47,6 +47,13 @@ export type IPGeoResult = {
   is_datacenter: boolean | null;
   abuse_score: number | null; // 0-100, quando o provedor fornece reputação
 
+  // Enriquecimento opcional (AbuseIPDB) — só preenchido quando
+  // ABUSEIPDB_API_KEY está configurada. Reverse DNS não depende de chave,
+  // é resolução de DNS padrão.
+  abuse_reports_count: number | null;
+  abuse_is_whitelisted: boolean | null;
+  reverse_dns: string | null;
+
   raw_ok: boolean;
   error: string | null;
 };
