@@ -95,8 +95,9 @@ fetch("https://<url-do-atlas-rastreador>/api/ingest", {
 
 ## Deploy na Vercel
 
-Este projeto vive na subpasta `atlas-rastreador/` deste repositório. Ao
-criar o projeto na Vercel, aponte o **Root Directory** para
-`atlas-rastreador` e configure `MONGODB_URI`, `ADMIN_PASSWORD`,
-`SESSION_SECRET`, `INGEST_SECRET` e `CRON_SECRET` (e opcionalmente
-`IPINFO_TOKEN`) nas variáveis de ambiente do projeto.
+Este projeto vive na subpasta `atlas-rastreador/` deste repositório —
+projeto Vercel próprio (`atlas-rastreador`, Root Directory apontado para
+esta pasta), separado do projeto `painel-metricas-atlas`. Configure
+`MONGODB_URI`, `ADMIN_PASSWORD`, `SESSION_SECRET`, `INGEST_SECRET` e
+`CRON_SECRET` (e opcionalmente `IPINFO_TOKEN`) nas variáveis de ambiente do
+projeto antes do primeiro deploy funcionar de ponta a ponta.
