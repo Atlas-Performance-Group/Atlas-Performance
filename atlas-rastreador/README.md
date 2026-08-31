@@ -5,6 +5,8 @@ aproximada de IPs que acessam sistemas, sites e APIs da Atlas Performance
 Group. **Aplicação própria**, separada do Painel de Métricas — não é uma
 aba dentro dele, tem seu próprio deploy, login e banco de dados.
 
+Produção: https://atlas-rastreador.vercel.app
+
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind — mesma stack e mesma
