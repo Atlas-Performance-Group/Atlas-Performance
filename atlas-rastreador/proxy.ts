@@ -24,6 +24,18 @@ function isServiceAuthorized(request: NextRequest, pathname: string): boolean {
 export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
 
+  // Compatibilidade com o caminho antigo (/admin/rastreador/...), de quando
+  // isso era uma aba dentro do painel-metricas. Links salvos, autocomplete
+  // do navegador ou favoritos antigos continuam funcionando em vez de dar
+  // 404 — redireciona pro caminho atual (/painel/...) preservando o resto
+  // da URL e a query string.
+  if (pathname.startsWith("/admin/rastreador") || pathname === "/admin") {
+    const rest = pathname.replace(/^\/admin\/rastreador/, "").replace(/^\/admin$/, "");
+    const target = new URL(`/painel${rest}`, request.url);
+    target.search = request.nextUrl.search;
+    return NextResponse.redirect(target);
+  }
+
   const isServiceRoute = pathname.startsWith("/api/ingest") || pathname.startsWith("/api/cleanup");
   const isProtectedApi =
     pathname.startsWith("/api/ips") ||
@@ -77,6 +89,7 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
 export const config = {
   matcher: [
     "/painel/:path*",
+    "/admin/:path*",
     "/api/ips/:path*",
     "/api/stats/:path*",
     "/api/logs/:path*",
