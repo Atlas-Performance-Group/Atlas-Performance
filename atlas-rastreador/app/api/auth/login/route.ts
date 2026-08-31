@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionValue, timingSafeEqual } from "@/lib/auth";
 import { countRecentLoginFailures, getRequestIp, logEvent } from "@/lib/auditLog";
+import { recordAccess } from "@/lib/ipTracking";
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX_ATTEMPTS = 8;
@@ -25,6 +26,14 @@ export async function POST(request: Request) {
 
   if (!timingSafeEqual(password, process.env.ADMIN_PASSWORD)) {
     await logEvent({ type: "login_failure", message: "Tentativa de login com senha incorreta.", ip });
+    await recordAccess({
+      ip,
+      source: "atlas-rastreador",
+      endpoint: "/api/auth/login",
+      method: "POST",
+      status: 401,
+      action: "Tentativa de login falhou (senha incorreta) — Atlas Rastreador",
+    }).catch(() => {});
     return NextResponse.json({ error: "Senha incorreta." }, { status: 401 });
   }
 
@@ -39,5 +48,13 @@ export async function POST(request: Request) {
   });
 
   await logEvent({ type: "login_success", message: "Login realizado com sucesso.", ip });
+  await recordAccess({
+    ip,
+    source: "atlas-rastreador",
+    endpoint: "/api/auth/login",
+    method: "POST",
+    status: 200,
+    action: "Login realizado com sucesso — Atlas Rastreador",
+  }).catch(() => {});
   return NextResponse.json({ ok: true });
 }

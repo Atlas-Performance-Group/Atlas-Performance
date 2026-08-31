@@ -61,7 +61,16 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
     // O próprio Atlas Rastreador também reporta o próprio painel de acesso —
     // navegar nele conta como um acesso monitorado, igual a qualquer outro
     // sistema que reporta via /api/ingest.
-    event.waitUntil(recordAccess({ ip, source: "atlas-rastreador", endpoint: pathname, method: request.method, status: 200 }));
+    event.waitUntil(
+      recordAccess({
+        ip,
+        source: "atlas-rastreador",
+        endpoint: pathname,
+        method: request.method,
+        status: 200,
+        action: "Acesso ao Atlas Rastreador",
+      })
+    );
     return NextResponse.next();
   }
 
@@ -73,7 +82,14 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
         metadata: { pathname },
         ip,
       }),
-      recordAccess({ ip, source: "atlas-rastreador", endpoint: pathname, method: request.method, status: 401 }),
+      recordAccess({
+        ip,
+        source: "atlas-rastreador",
+        endpoint: pathname,
+        method: request.method,
+        status: 401,
+        action: "Tentativa de acesso ao Atlas Rastreador sem login",
+      }),
     ])
   );
 

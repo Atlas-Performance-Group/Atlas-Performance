@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolveIpGeo } from "@/lib/geo";
 import { getIpRecord, listIpHistory, RISK_LABELS } from "@/lib/ipTracking";
+import { describeEvent } from "@/lib/eventDescription";
 import { NETWORK_TYPE_LABELS } from "@/lib/geo/classify";
 import { detectIpVersion, isPrivateOrReservedIp, normalizeIp } from "@/lib/ipValidation";
 import { getRequestIp, logEvent } from "@/lib/auditLog";
@@ -74,7 +75,7 @@ export async function GET(request: Request, context: { params: Promise<{ ip: str
       ? ["  Nenhum evento registrado para este IP."]
       : history.map(
           (h) =>
-            `  ${new Date(h.created_at).toLocaleString("pt-BR")} | ${h.source} | ${h.method} ${h.endpoint} | status ${h.status}${
+            `  ${new Date(h.created_at).toLocaleString("pt-BR")} | ${h.source} | ${describeEvent(h)} (${h.method} ${h.endpoint}, status ${h.status})${
               h.blocked ? " | BLOQUEADO" : ""
             }`
         )),

@@ -17,7 +17,13 @@ export async function POST(request: Request) {
   if (!timingSafeEqual(password, process.env.ADMIN_PASSWORD)) {
     await logEvent({ type: "login_failure", message: "Tentativa de login com senha incorreta.", ip });
     await Promise.all([
-      reportAccessToRastreador({ ip, endpoint: "/api/auth/login", method: "POST", status: 401 }),
+      reportAccessToRastreador({
+        ip,
+        endpoint: "/api/auth/login",
+        method: "POST",
+        status: 401,
+        action: "Tentativa de login falhou (senha incorreta) — Painel de Métricas",
+      }),
       notifyAdmins({
         title: "Tentativa de login falhou",
         body: `IP ${ip ?? "desconhecido"} tentou entrar no Painel de Métricas com senha incorreta.`,
@@ -43,7 +49,15 @@ export async function POST(request: Request) {
 
   await logEvent({ type: "login_success", message: "Login realizado com sucesso.", ip });
   await Promise.all([
-    reportAccessToRastreador({ ip, endpoint: "/api/auth/login", method: "POST", status: 200 }),
+    reportAccessToRastreador({
+      ip,
+      endpoint: "/api/auth/login",
+      method: "POST",
+      status: 200,
+      action: isKnownIp
+        ? "Login realizado com sucesso — Painel de Métricas"
+        : "Login realizado com sucesso — Painel de Métricas (primeiro acesso deste IP)",
+    }),
     notifyAdmins({
       title: isKnownIp ? "Login no Painel de Métricas" : "⚠️ Login de um IP novo",
       body: isKnownIp

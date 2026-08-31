@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { IPGeoResult } from "@/lib/geo/types";
 import type { IpAccessEvent, IpRecord } from "@/lib/ipTracking";
+import { describeEvent } from "@/lib/eventDescription";
 import { RISK_LABELS } from "@/lib/risk";
 import { NETWORK_TYPE_LABELS } from "@/lib/geo/classify";
 import { AccuracyBadge, NetworkTypeBadge, PrecisionDisclaimer, RiskBadge } from "@/components/RastreadorBadges";
@@ -246,8 +247,8 @@ export function IpDetailView({
                 <tr className="text-left" style={{ color: "var(--ink-soft)" }}>
                   <th className="py-2 pr-4 font-bold uppercase text-xs">Data/hora</th>
                   <th className="py-2 pr-4 font-bold uppercase text-xs">Sistema</th>
+                  <th className="py-2 pr-4 font-bold uppercase text-xs">Ação</th>
                   <th className="py-2 pr-4 font-bold uppercase text-xs">Endpoint</th>
-                  <th className="py-2 pr-4 font-bold uppercase text-xs">Método</th>
                   <th className="py-2 pr-4 font-bold uppercase text-xs">Status</th>
                   <th className="py-2 pr-4 font-bold uppercase text-xs">Resultado</th>
                 </tr>
@@ -259,8 +260,10 @@ export function IpDetailView({
                       {new Date(h.created_at).toLocaleString("pt-BR")}
                     </td>
                     <td className="py-2 pr-4 whitespace-nowrap">{h.source}</td>
-                    <td className="py-2 pr-4 whitespace-nowrap font-mono text-xs">{h.endpoint}</td>
-                    <td className="py-2 pr-4 whitespace-nowrap">{h.method}</td>
+                    <td className="py-2 pr-4">{describeEvent(h)}</td>
+                    <td className="py-2 pr-4 whitespace-nowrap font-mono text-xs" style={{ color: "var(--ink-faint)" }}>
+                      {h.method} {h.endpoint}
+                    </td>
                     <td className="py-2 pr-4 whitespace-nowrap">{h.status}</td>
                     <td className="py-2 pr-4 whitespace-nowrap">
                       {h.blocked ? (

@@ -18,6 +18,10 @@ export async function reportAccessToRastreador(input: {
   endpoint: string;
   method: string;
   status: number;
+  // Descrição legível do que aconteceu (ex: "Tentativa de login falhou"),
+  // mostrada no histórico do IP no Rastreador em vez de só método/status
+  // crus. Opcional — sem ela, o Rastreador usa uma descrição genérica.
+  action?: string;
 }): Promise<void> {
   const url = process.env.ATLAS_RASTREADOR_INGEST_URL;
   const secret = process.env.ATLAS_RASTREADOR_INGEST_SECRET;
@@ -33,6 +37,7 @@ export async function reportAccessToRastreador(input: {
         method: input.method,
         status: input.status,
         source: "painel-metricas",
+        action: input.action,
       }),
       signal: AbortSignal.timeout(3000),
     });

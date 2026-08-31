@@ -26,6 +26,11 @@ export type IpAccessEvent = {
   status: number;
   blocked: boolean;
   authenticated_user: string | null;
+  // Descrição legível da ação, escrita por quem reporta o evento (ex:
+  // "Tentativa de login falhou"). Null nos eventos antigos e nos genéricos
+  // de navegação (proxy.ts não sabe o significado de negócio da rota) — a
+  // UI cai para uma descrição genérica a partir de método/endpoint/status.
+  action: string | null;
   created_at: string;
 };
 
@@ -99,6 +104,7 @@ export async function recordAccess(input: {
   method: string;
   status: number;
   authenticatedUser?: string | null;
+  action?: string | null;
 }): Promise<void> {
   if (!input.ip) return;
   const ip = normalizeIp(input.ip);
@@ -118,6 +124,7 @@ export async function recordAccess(input: {
       endpoint: input.endpoint,
       method: input.method,
       status: input.status,
+      action: input.action ?? null,
       blocked,
       authenticated_user: input.authenticatedUser ?? null,
       created_at: now,
