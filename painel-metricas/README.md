@@ -68,6 +68,16 @@ período fixo importado.
 4. Gerencie os links já criados em `/admin/links` — é possível revogar (ou
    reativar) a qualquer momento.
 
+## Integração com o Atlas Rastreador (opcional)
+
+Este painel pode reportar seus acessos para o **Atlas Rastreador**
+(`atlas-rastreador/`, app separado neste mesmo repositório, com seu próprio
+deploy/banco) — que faz o monitoramento de segurança e geolocalização de IP
+de todos os sistemas Atlas. Configurando `ATLAS_RASTREADOR_INGEST_URL` e
+`ATLAS_RASTREADOR_INGEST_SECRET`, `proxy.ts` passa a chamar `POST
+/api/ingest` do Rastreador a cada acesso autenticado ou negado. Sem essas
+variáveis, o comportamento do painel não muda em nada.
+
 ## Deploy na Vercel
 
 Este projeto vive na subpasta `painel-metricas/` deste repositório (que

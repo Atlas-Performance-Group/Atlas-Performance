@@ -1,8 +1,9 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionValue } from "./lib/auth";
 import { getRequestIp, logEvent } from "./lib/auditLog";
+import { reportAccessToRastreador } from "./lib/rastreadorReport";
 
-export async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
 
   const isProtectedApi =
@@ -18,18 +19,29 @@ export async function proxy(request: NextRequest) {
 
   const cookie = request.cookies.get(SESSION_COOKIE)?.value;
   const valid = await verifySessionValue(cookie);
+  const ip = getRequestIp(request);
 
-  if (valid) return NextResponse.next();
+  if (valid) {
+    // Reporta pro Atlas Rastreador (app separado) sem bloquear a resposta —
+    // no-op se ATLAS_RASTREADOR_INGEST_URL/SECRET não estiverem configuradas.
+    event.waitUntil(Promise.resolve(reportAccessToRastreador({ ip, endpoint: pathname, method: request.method, status: 200 })));
+    return NextResponse.next();
+  }
 
   // Alguém tentou acessar uma rota protegida (painel admin ou API interna)
   // sem sessão válida — ex: um cliente tentando adivinhar /admin a partir
   // do link público. Fica registrado no /admin/logs.
-  await logEvent({
-    type: "unauthorized_access_attempt",
-    message: `Tentativa de acessar "${pathname}" sem estar autenticado.`,
-    metadata: { pathname },
-    ip: getRequestIp(request),
-  });
+  event.waitUntil(
+    Promise.all([
+      logEvent({
+        type: "unauthorized_access_attempt",
+        message: `Tentativa de acessar "${pathname}" sem estar autenticado.`,
+        metadata: { pathname },
+        ip,
+      }),
+      Promise.resolve(reportAccessToRastreador({ ip, endpoint: pathname, method: request.method, status: 401 })),
+    ])
+  );
 
   if (isProtectedApi) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
