@@ -21,13 +21,6 @@ try {
   await db.collection("shared_links").createIndex({ token: 1 }, { unique: true });
   await db.collection("audit_logs").createIndex({ created_at: -1 });
 
-  // Atlas Rastreador
-  await db.collection("ip_access_events").createIndex({ ip: 1, created_at: -1 });
-  await db.collection("ip_access_events").createIndex({ created_at: -1 });
-  await db.collection("ip_records").createIndex({ risk_level: 1 });
-  await db.collection("ip_records").createIndex({ last_seen: -1 });
-  await db.collection("ip_geo_cache").createIndex({ cached_at: -1 });
-
   console.log("Índices do MongoDB criados com sucesso.");
 } catch (err) {
   console.error("Falha ao criar índices:", err);

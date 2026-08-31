@@ -30,9 +30,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/logs" className="atlas-btn-secondary">
               Logs
             </Link>
-            <Link href="/admin/rastreador" className="atlas-btn-secondary">
-              Rastreador
-            </Link>
             <PushNotificationToggle />
             <LogoutButton />
           </nav>
