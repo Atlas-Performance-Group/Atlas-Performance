@@ -10,6 +10,7 @@
 import { getDb } from "./db";
 import { nanoid } from "nanoid";
 import { detectIpVersion, isPrivateOrReservedIp, normalizeIp } from "./ipValidation";
+import { escapeRegExp } from "./regex";
 import type { NetworkType } from "./geo/types";
 import type { RiskLevel } from "./risk";
 export type { RiskLevel } from "./risk";
@@ -199,7 +200,7 @@ export async function listIpRecords(filter: IpListFilter = {}): Promise<{ items:
   const records = await recordsCollection();
   const query: Record<string, unknown> = {};
   if (filter.search) {
-    query._id = { $regex: filter.search.trim(), $options: "i" };
+    query._id = { $regex: escapeRegExp(filter.search.trim().slice(0, 100)), $options: "i" };
   }
   if (filter.riskLevel) {
     query.risk_level = filter.riskLevel;

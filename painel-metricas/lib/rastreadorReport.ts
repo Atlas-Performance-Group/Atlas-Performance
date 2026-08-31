@@ -7,23 +7,36 @@
 // ATLAS_RASTREADOR_INGEST_SECRET ausentes fazem esta função virar no-op, e
 // qualquer falha de rede é engolida — nunca deve atrasar ou derrubar a
 // requisição original do painel de métricas.
-export function reportAccessToRastreador(input: { ip: string | null; endpoint: string; method: string; status: number }): void {
+//
+// Retorna a Promise do fetch (em vez de disparar e já retornar void) para
+// que quem chama possa passá-la a `event.waitUntil()` — sem isso, a função
+// serverless podia congelar assim que a resposta principal fosse enviada,
+// antes do fetch em segundo plano terminar, e o relatório nunca chegava ao
+// Rastreador.
+export async function reportAccessToRastreador(input: {
+  ip: string | null;
+  endpoint: string;
+  method: string;
+  status: number;
+}): Promise<void> {
   const url = process.env.ATLAS_RASTREADOR_INGEST_URL;
   const secret = process.env.ATLAS_RASTREADOR_INGEST_SECRET;
   if (!url || !secret || !input.ip) return;
 
-  fetch(`${url.replace(/\/$/, "")}/api/ingest`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-    body: JSON.stringify({
-      ip: input.ip,
-      endpoint: input.endpoint,
-      method: input.method,
-      status: input.status,
-      source: "painel-metricas",
-    }),
-    signal: AbortSignal.timeout(3000),
-  }).catch(() => {
+  try {
+    await fetch(`${url.replace(/\/$/, "")}/api/ingest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+      body: JSON.stringify({
+        ip: input.ip,
+        endpoint: input.endpoint,
+        method: input.method,
+        status: input.status,
+        source: "painel-metricas",
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+  } catch {
     // silencioso: o Atlas Rastreador pode estar fora do ar sem afetar o painel
-  });
+  }
 }

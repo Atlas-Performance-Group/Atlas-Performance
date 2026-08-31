@@ -1,19 +1,22 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionValue } from "./lib/auth";
+import { SESSION_COOKIE, timingSafeEqual, verifySessionValue } from "./lib/auth";
 import { getRequestIp, logEvent } from "./lib/auditLog";
 import { recordAccess } from "./lib/ipTracking";
 
 // Rotas que usam autenticação própria em vez de sessão de admin:
 // /api/ingest (secret compartilhado, chamado por outros sistemas Atlas) e
-// /api/cleanup (secret de cron do Vercel).
+// /api/cleanup (secret de cron do Vercel). Comparação em tempo constante,
+// igual à senha de login — não há motivo pra esses secrets serem menos
+// protegidos contra timing attack do que o ADMIN_PASSWORD.
 function isServiceAuthorized(request: NextRequest, pathname: string): boolean {
+  const header = request.headers.get("authorization") ?? "";
   if (pathname.startsWith("/api/ingest")) {
     const secret = process.env.INGEST_SECRET;
-    return !!secret && request.headers.get("authorization") === `Bearer ${secret}`;
+    return !!secret && timingSafeEqual(header, `Bearer ${secret}`);
   }
   if (pathname.startsWith("/api/cleanup")) {
     const secret = process.env.CRON_SECRET;
-    return !!secret && request.headers.get("authorization") === `Bearer ${secret}`;
+    return !!secret && timingSafeEqual(header, `Bearer ${secret}`);
   }
   return false;
 }

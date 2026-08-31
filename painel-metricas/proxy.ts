@@ -24,7 +24,7 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
   if (valid) {
     // Reporta pro Atlas Rastreador (app separado) sem bloquear a resposta —
     // no-op se ATLAS_RASTREADOR_INGEST_URL/SECRET não estiverem configuradas.
-    event.waitUntil(Promise.resolve(reportAccessToRastreador({ ip, endpoint: pathname, method: request.method, status: 200 })));
+    event.waitUntil(reportAccessToRastreador({ ip, endpoint: pathname, method: request.method, status: 200 }));
     return NextResponse.next();
   }
 
@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
         metadata: { pathname },
         ip,
       }),
-      Promise.resolve(reportAccessToRastreador({ ip, endpoint: pathname, method: request.method, status: 401 })),
+      reportAccessToRastreador({ ip, endpoint: pathname, method: request.method, status: 401 }),
     ])
   );
 

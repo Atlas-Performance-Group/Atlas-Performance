@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordAccess } from "@/lib/ipTracking";
+import { timingSafeEqual } from "@/lib/auth";
 
 // Endpoint de ingestão: qualquer site/API/aplicação da Atlas (painel de
 // métricas, sites institucionais, etc.) reporta seus acessos aqui para
@@ -13,8 +14,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "INGEST_SECRET não configurada no servidor." }, { status: 500 });
   }
 
-  const auth = request.headers.get("authorization");
-  if (auth !== `Bearer ${secret}`) {
+  const auth = request.headers.get("authorization") ?? "";
+  if (!timingSafeEqual(auth, `Bearer ${secret}`)) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
 
