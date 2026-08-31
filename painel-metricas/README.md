@@ -74,9 +74,11 @@ Este painel pode reportar seus acessos para o **Atlas Rastreador**
 (`atlas-rastreador/`, app separado neste mesmo repositório, com seu próprio
 deploy/banco) — que faz o monitoramento de segurança e geolocalização de IP
 de todos os sistemas Atlas. Configurando `ATLAS_RASTREADOR_INGEST_URL` e
-`ATLAS_RASTREADOR_INGEST_SECRET`, `proxy.ts` passa a chamar `POST
-/api/ingest` do Rastreador a cada acesso autenticado ou negado. Sem essas
-variáveis, o comportamento do painel não muda em nada.
+`ATLAS_RASTREADOR_INGEST_SECRET`, `proxy.ts` (e a rota de login) passam a
+chamar `POST /api/ingest` do Rastreador a cada acesso autenticado, negado
+ou tentativa de login. Sem essas variáveis, o comportamento do painel não
+muda em nada. `ATLAS_RASTREADOR_INGEST_SECRET` precisa ser idêntico ao
+`INGEST_SECRET` configurado no projeto `atlas-rastreador`.
 
 ## Deploy na Vercel
 
