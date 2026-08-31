@@ -2,13 +2,13 @@ import { getClientsByIds, getMetricsInRange, getSharedLinkByToken, sumRows } fro
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
-import { computePreviousPeriodComparison, computePreviousPeriodComparisonForClients } from "@/lib/comparison";
+import { computePreviousPeriodComparison } from "@/lib/comparison";
 import { notifyAdmins } from "@/lib/pushNotifications";
 import { formatDateBR, formatRangeLabel } from "@/lib/dateRanges";
 import { AtlasLogo, ClientLogo } from "@/components/Logo";
 import { ReportView } from "@/components/ReportView";
 import type { ClientReport } from "@/lib/types";
-import type { Client, DailyRow } from "@/lib/data";
+import type { DailyRow } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -59,75 +59,10 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
   let reports: ClientReport[];
   let generatedAt = new Date();
 
-  if (link.merge && clients.length > 1) {
-    // Link "unir empresas": em vez de uma seção por empresa, soma as
-    // métricas de todas elas num único relatório.
-    const mergedClient: Client = {
-      id: "merged",
-      slug: "merged",
-      name: clients.map((c) => c.name).join(" + "),
-      business_label: link.label ?? "Grupo de Empresas",
-      logo_url: clients.find((c) => c.logo_url)?.logo_url ?? null,
-      target_cost_per_conversation: null,
-      created_at: new Date().toISOString(),
-    };
-
-    if (link.mode === "frozen" && link.frozen_snapshot) {
-      const snapshot = link.frozen_snapshot as {
-        generatedAt?: string;
-        data: {
-          clientId: string;
-          totals: ClientReport["totals"];
-          derived: ClientReport["derived"];
-          insights: ClientReport["insights"];
-          daily: DailyRow[];
-          extraMetrics: ClientReport["extraMetrics"];
-          comparison?: ClientReport["comparison"];
-        }[];
-      };
-      const entry = snapshot.data[0];
-      reports = entry
-        ? [
-            {
-              client: mergedClient,
-              range: { start: link.date_start, end: link.date_end },
-              totals: entry.totals,
-              derived: entry.derived,
-              insights: entry.insights,
-              daily: entry.daily,
-              extraMetrics: entry.extraMetrics ?? [],
-              comparison: entry.comparison ?? null,
-            },
-          ]
-        : [];
-      if (snapshot.generatedAt) generatedAt = new Date(snapshot.generatedAt);
-    } else {
-      const rowsPerClient = await Promise.all(
-        clients.map((client) => getMetricsInRange(client.id, link.date_start, link.date_end))
-      );
-      const rows = rowsPerClient.flat();
-      const totals = sumRows(rows, link.date_start, link.date_end);
-      const derived = computeDerivedMetrics(totals);
-      const insights = generateInsights(totals);
-      const extraMetrics = aggregateExtraMetrics(rows);
-      const comparison = await computePreviousPeriodComparisonForClients(
-        clients.map((c) => c.id),
-        { start: link.date_start, end: link.date_end }
-      );
-      reports = [
-        {
-          client: mergedClient,
-          range: { start: link.date_start, end: link.date_end },
-          totals,
-          derived,
-          insights,
-          daily: rows,
-          extraMetrics,
-          comparison,
-        },
-      ];
-    }
-  } else if (link.mode === "frozen" && link.frozen_snapshot) {
+  // Um relatório por empresa, mesmo em links "unidos" — a fusão é só
+  // visual (título e cabeçalho em comum); as métricas de cada empresa
+  // continuam separadas, uma seção por vez.
+  if (link.mode === "frozen" && link.frozen_snapshot) {
     const snapshot = link.frozen_snapshot as {
       generatedAt?: string;
       data: {
@@ -209,23 +144,48 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
       </header>
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-6 flex flex-col gap-10">
-        {reports.map((report) => (
-          <section key={report.client.id} className="flex flex-col gap-4">
+        {link.merge && clients.length > 1 ? (
+          <section className="flex flex-col gap-6">
             <div className="flex items-center gap-3 atlas-card px-4 py-3" style={{ background: "var(--red-950)" }}>
               <div style={{ color: "#fff8ec" }} className="font-display text-lg">
                 ATLAS
               </div>
               <div style={{ color: "var(--gold-400)" }}>×</div>
-              <ClientLogo name={report.client.name} logoUrl={report.client.logo_url} />
-              {report.client.business_label && (
-                <span className="text-xs ml-auto" style={{ color: "#ffe6a3" }}>
-                  {report.client.business_label}
-                </span>
-              )}
+              <span className="font-bold text-sm" style={{ color: "#fff8ec" }}>
+                {clients.map((c) => c.name).join(" e ")}
+              </span>
+              <span className="text-xs ml-auto" style={{ color: "#ffe6a3" }}>
+                {link.label || "Grupo de Empresas"}
+              </span>
             </div>
-            <ReportView report={report} sections={link.visible_sections} />
+            {reports.map((report) => (
+              <div key={report.client.id} className="flex flex-col gap-4">
+                <h3 className="font-display text-lg">
+                  Métricas <span className="atlas-gold">{report.client.name}</span>
+                </h3>
+                <ReportView report={report} sections={link.visible_sections} />
+              </div>
+            ))}
           </section>
-        ))}
+        ) : (
+          reports.map((report) => (
+            <section key={report.client.id} className="flex flex-col gap-4">
+              <div className="flex items-center gap-3 atlas-card px-4 py-3" style={{ background: "var(--red-950)" }}>
+                <div style={{ color: "#fff8ec" }} className="font-display text-lg">
+                  ATLAS
+                </div>
+                <div style={{ color: "var(--gold-400)" }}>×</div>
+                <ClientLogo name={report.client.name} logoUrl={report.client.logo_url} />
+                {report.client.business_label && (
+                  <span className="text-xs ml-auto" style={{ color: "#ffe6a3" }}>
+                    {report.client.business_label}
+                  </span>
+                )}
+              </div>
+              <ReportView report={report} sections={link.visible_sections} />
+            </section>
+          ))
+        )}
       </main>
 
       <footer className="text-center text-xs py-6" style={{ color: "var(--ink-faint)" }}>

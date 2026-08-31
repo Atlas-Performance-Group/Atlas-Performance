@@ -37,8 +37,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Nenhum cliente válido encontrado." }, { status: 404 });
   }
 
-  const frozenSnapshot =
-    mode === "frozen" ? await buildFrozenSnapshot(clients, dateStart, dateEnd, merge) : undefined;
+  const frozenSnapshot = mode === "frozen" ? await buildFrozenSnapshot(clients, dateStart, dateEnd) : undefined;
 
   const link = await createSharedLink({
     label,

@@ -21,19 +21,3 @@ export async function computePreviousPeriodComparison(
   const previousDerived = computeDerivedMetrics(previousTotals);
   return { previousRange, previousTotals, previousDerived };
 }
-
-// Mesma comparação, mas somando as métricas de várias empresas — usado nos
-// links que unem os dados de mais de um cliente num relatório só.
-export async function computePreviousPeriodComparisonForClients(
-  clientIds: string[],
-  range: DateRange
-): Promise<PeriodComparison> {
-  const previousRange = previousPeriod(range);
-  const rowsPerClient = await Promise.all(
-    clientIds.map((id) => getMetricsInRange(id, previousRange.start, previousRange.end))
-  );
-  const rows = rowsPerClient.flat();
-  const previousTotals = sumRows(rows, previousRange.start, previousRange.end);
-  const previousDerived = computeDerivedMetrics(previousTotals);
-  return { previousRange, previousTotals, previousDerived };
-}
