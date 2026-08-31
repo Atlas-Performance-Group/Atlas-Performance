@@ -32,11 +32,11 @@ function Field({ label, value }: { label: string; value: string | number | null 
   );
 }
 
-function BoolField({ label, value }: { label: string; value: boolean | null }) {
+function BoolField({ label, value }: { label: string; value: boolean | null | undefined }) {
   return (
     <Field
       label={label}
-      value={value === null ? "Não disponível" : value ? "Sim" : "Não"}
+      value={value === null || value === undefined ? "Não disponível" : value ? "Sim" : "Não"}
     />
   );
 }
@@ -111,6 +111,14 @@ export function IpDetailView({
           </p>
         </div>
         <div className="flex gap-2">
+          <Link
+            href={`/painel/ip/${encodeURIComponent(ip)}?refresh=1`}
+            className="atlas-btn-secondary"
+            style={{ color: "var(--ink)" }}
+            title="Ignora o cache e consulta os provedores de novo agora"
+          >
+            Atualizar dados
+          </Link>
           <a href={`/api/ips/${encodeURIComponent(ip)}/report`} className="atlas-btn-primary">
             Gerar relatório
           </a>

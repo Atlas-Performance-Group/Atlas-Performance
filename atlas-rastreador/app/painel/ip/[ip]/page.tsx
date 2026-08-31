@@ -8,8 +8,15 @@ import { IpDetailView } from "./IpDetailView";
 
 export const dynamic = "force-dynamic";
 
-export default async function IpDetailPage({ params }: { params: Promise<{ ip: string }> }) {
+export default async function IpDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ip: string }>;
+  searchParams: Promise<{ refresh?: string }>;
+}) {
   const { ip: rawIp } = await params;
+  const { refresh } = await searchParams;
   const ip = normalizeIp(decodeURIComponent(rawIp));
   const version = detectIpVersion(ip);
 
@@ -24,7 +31,7 @@ export default async function IpDetailPage({ params }: { params: Promise<{ ip: s
   let data: Awaited<ReturnType<typeof loadIpDetail>> | null = null;
   let loadError: string | null = null;
   try {
-    data = await loadIpDetail(ip);
+    data = await loadIpDetail(ip, refresh === "1");
   } catch (err) {
     loadError = err instanceof Error ? err.message : "Falha ao consultar geolocalização.";
   }
@@ -36,8 +43,12 @@ export default async function IpDetailPage({ params }: { params: Promise<{ ip: s
   return <IpDetailView ip={ip} ipVersion={version} geo={data.geo} record={data.record} history={data.history} />;
 }
 
-async function loadIpDetail(ip: string) {
-  const [geo, record, history] = await Promise.all([resolveIpGeo(ip), getIpRecord(ip), listIpHistory(ip, 100)]);
+async function loadIpDetail(ip: string, skipCache: boolean) {
+  const [geo, record, history] = await Promise.all([
+    resolveIpGeo(ip, { skipCache }),
+    getIpRecord(ip),
+    listIpHistory(ip, 100),
+  ]);
 
   if (geo.raw_ok) {
     await setIpNetworkType(ip, geo.network_type);
