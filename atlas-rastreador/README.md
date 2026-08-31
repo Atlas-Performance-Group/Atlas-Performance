@@ -106,5 +106,8 @@ Este projeto vive na subpasta `atlas-rastreador/` deste repositório —
 projeto Vercel próprio (`atlas-rastreador`, Root Directory apontado para
 esta pasta), separado do projeto `painel-metricas-atlas`. Configure
 `MONGODB_URI`, `ADMIN_PASSWORD`, `SESSION_SECRET`, `INGEST_SECRET` e
-`CRON_SECRET` (e opcionalmente `IPINFO_TOKEN`) nas variáveis de ambiente do
-projeto antes do primeiro deploy funcionar de ponta a ponta.
+`CRON_SECRET` (e opcionalmente `IPINFO_TOKEN`, `ABUSEIPDB_API_KEY`) nas
+variáveis de ambiente do projeto antes do primeiro deploy funcionar de
+ponta a ponta. Trocando `INGEST_SECRET` depois, atualize também
+`ATLAS_RASTREADOR_INGEST_SECRET` em todo sistema que reporta pra cá (ex:
+painel-metricas) — os dois valores precisam ser idênticos.
