@@ -18,7 +18,9 @@ export type AuditLogType =
   | "link_updated"
   | "link_revoked"
   | "link_reactivated"
-  | "link_deleted";
+  | "link_deleted"
+  | "ip_lookup"
+  | "ip_report_generated";
 
 export type AuditLogEntry = {
   id: string;
@@ -64,6 +66,15 @@ export async function listRecentLogs(limit = 200): Promise<AuditLogEntry[]> {
   const col = await auditLogCollection();
   const docs = await col.find({}).sort({ created_at: -1 }).limit(limit).toArray();
   return docs.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
+}
+
+// Usado pelo rate limiting de login: conta falhas recentes vindas do mesmo
+// IP para decidir se a próxima tentativa deve ser bloqueada.
+export async function countRecentLoginFailures(ip: string | null, windowMs: number): Promise<number> {
+  if (!ip) return 0;
+  const col = await auditLogCollection();
+  const since = new Date(Date.now() - windowMs).toISOString();
+  return col.countDocuments({ type: "login_failure", ip, created_at: { $gte: since } });
 }
 
 export function getRequestIp(request: Request): string | null {

@@ -18,6 +18,8 @@ const TYPE_LABELS: Record<AuditLogType, string> = {
   link_revoked: "Link revogado",
   link_reactivated: "Link reativado",
   link_deleted: "Link excluído",
+  ip_lookup: "Consulta de IP",
+  ip_report_generated: "Relatório de IP gerado",
 };
 
 const TYPE_COLORS: Record<AuditLogType, string> = {
@@ -33,6 +35,8 @@ const TYPE_COLORS: Record<AuditLogType, string> = {
   link_revoked: "var(--red-600)",
   link_reactivated: "#2fa64c",
   link_deleted: "var(--red-600)",
+  ip_lookup: "var(--gold-500)",
+  ip_report_generated: "var(--gold-500)",
 };
 
 function formatTimestamp(iso: string): string {

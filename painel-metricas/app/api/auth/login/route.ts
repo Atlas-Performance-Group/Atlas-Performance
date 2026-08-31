@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, createSessionValue, timingSafeEqual } from "@/lib/auth";
-import { getRequestIp, logEvent } from "@/lib/auditLog";
+import { countRecentLoginFailures, getRequestIp, logEvent } from "@/lib/auditLog";
+
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const RATE_LIMIT_MAX_ATTEMPTS = 8;
 
 export async function POST(request: Request) {
   const ip = getRequestIp(request);
@@ -10,6 +13,14 @@ export async function POST(request: Request) {
 
   if (!process.env.ADMIN_PASSWORD) {
     return NextResponse.json({ error: "ADMIN_PASSWORD não configurada no servidor." }, { status: 500 });
+  }
+
+  const recentFailures = await countRecentLoginFailures(ip, RATE_LIMIT_WINDOW_MS);
+  if (recentFailures >= RATE_LIMIT_MAX_ATTEMPTS) {
+    return NextResponse.json(
+      { error: "Muitas tentativas de login. Aguarde alguns minutos e tente novamente." },
+      { status: 429 }
+    );
   }
 
   if (!timingSafeEqual(password, process.env.ADMIN_PASSWORD)) {
