@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, Manrope } from "next/font/google";
 import "./globals.css";
 
@@ -18,6 +18,15 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Métricas Atlas",
   description: "Painel de métricas de performance da Atlas Performance Group.",
+  appleWebApp: {
+    capable: true,
+    title: "Métricas Atlas",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#b40b0b",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
