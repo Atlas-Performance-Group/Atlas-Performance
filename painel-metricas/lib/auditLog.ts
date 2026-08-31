@@ -66,6 +66,16 @@ export async function listRecentLogs(limit = 200): Promise<AuditLogEntry[]> {
   return docs.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
 }
 
+// Usado para decidir se um login bem-sucedido merece destaque de "IP novo"
+// na notificação push — verdadeiro só se esse IP nunca teve um login OK
+// registrado antes.
+export async function hasSuccessfulLoginFromIp(ip: string | null): Promise<boolean> {
+  if (!ip) return false;
+  const col = await auditLogCollection();
+  const existing = await col.findOne({ type: "login_success", ip });
+  return existing !== null;
+}
+
 export function getRequestIp(request: Request): string | null {
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
