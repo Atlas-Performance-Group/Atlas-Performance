@@ -7,6 +7,10 @@ aba dentro dele, tem seu próprio deploy, login e banco de dados.
 
 Produção: https://atlas-rastreador.vercel.app
 
+> Ao cadastrar as variáveis de ambiente na Vercel, marque pelo menos
+> **Production** e **Preview** em cada uma — sem "Preview" marcado, deploys
+> de branch (como os desta feature branch) não enxergam a variável.
+
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind — mesma stack e mesma
