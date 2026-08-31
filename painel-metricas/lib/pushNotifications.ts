@@ -70,29 +70,3 @@ export async function notifyAdmins(payload: { title: string; body: string; url?:
     })
   );
 }
-
-// Evita notificar a cada F5 do cliente no link: só manda de novo depois de
-// um intervalo mínimo por link.
-const THROTTLE_MS = 15 * 60 * 1000;
-
-type ThrottleDoc = { _id: string; last_notified_at: string };
-
-async function throttleCollection() {
-  const db = await getDb();
-  return db.collection<ThrottleDoc>("link_view_notifications");
-}
-
-export async function shouldNotifyLinkView(token: string): Promise<boolean> {
-  const col = await throttleCollection();
-  const now = Date.now();
-  const doc = await col.findOne({ _id: token });
-  if (doc && now - new Date(doc.last_notified_at).getTime() < THROTTLE_MS) {
-    return false;
-  }
-  await col.updateOne(
-    { _id: token },
-    { $set: { last_notified_at: new Date().toISOString() } },
-    { upsert: true }
-  );
-  return true;
-}

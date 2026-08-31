@@ -3,7 +3,7 @@ import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
 import { computePreviousPeriodComparison } from "@/lib/comparison";
-import { notifyAdmins, shouldNotifyLinkView } from "@/lib/pushNotifications";
+import { notifyAdmins } from "@/lib/pushNotifications";
 import { formatDateBR, formatRangeLabel } from "@/lib/dateRanges";
 import { AtlasLogo, ClientLogo } from "@/components/Logo";
 import { ReportView } from "@/components/ReportView";
@@ -46,14 +46,12 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
   // ambiente serverless a função pode ser encerrada assim que a resposta
   // é enviada, derrubando qualquer promise pendente não aguardada.
   try {
-    if (await shouldNotifyLinkView(token)) {
-      const clientNames = clients.map((c) => c.name).join(", ");
-      await notifyAdmins({
-        title: "Cliente acessou o relatório",
-        body: `${clientNames}${link.label ? ` (${link.label})` : ""} abriu o link do relatório.`,
-        url: "/admin/links",
-      });
-    }
+    const clientNames = clients.map((c) => c.name).join(", ");
+    await notifyAdmins({
+      title: "Cliente acessou o relatório",
+      body: `${clientNames}${link.label ? ` (${link.label})` : ""} abriu o link do relatório.`,
+      url: "/admin/links",
+    });
   } catch (err) {
     console.error("Falha ao notificar acesso ao link:", err);
   }
