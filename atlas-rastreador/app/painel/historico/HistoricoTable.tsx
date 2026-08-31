@@ -106,6 +106,7 @@ export function HistoricoTable({ initialItems, initialTotal }: { initialItems: I
                 <th className="py-2 pr-4 font-bold uppercase text-xs">País</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Cidade</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Organização</th>
+                <th className="py-2 pr-4 font-bold uppercase text-xs">Origem / Observação</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Acessos</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Risco</th>
                 <th className="py-2 pr-4 font-bold uppercase text-xs">Último acesso</th>
@@ -115,7 +116,7 @@ export function HistoricoTable({ initialItems, initialTotal }: { initialItems: I
             <tbody>
               {items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-6 text-center" style={{ color: "var(--ink-soft)" }}>
+                  <td colSpan={9} className="py-6 text-center" style={{ color: "var(--ink-soft)" }}>
                     Nenhum IP registrado ainda.
                   </td>
                 </tr>
@@ -126,6 +127,14 @@ export function HistoricoTable({ initialItems, initialTotal }: { initialItems: I
                     <td className="py-2 pr-4 whitespace-nowrap">{item.country ?? "—"}</td>
                     <td className="py-2 pr-4 whitespace-nowrap">{item.city ?? "—"}</td>
                     <td className="py-2 pr-4 whitespace-nowrap">{item.organization ?? "—"}</td>
+                    <td className="py-2 pr-4">
+                      {item.last_action ?? "—"}
+                      {item.last_source && (
+                        <span className="block text-xs" style={{ color: "var(--ink-faint)" }}>
+                          {item.last_source}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2 pr-4 whitespace-nowrap">
                       {item.access_count} <span style={{ color: "var(--ink-faint)" }}>({item.blocked_count} bloq.)</span>
                     </td>

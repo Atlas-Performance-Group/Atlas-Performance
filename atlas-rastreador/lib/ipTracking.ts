@@ -11,6 +11,7 @@ import { getDb } from "./db";
 import { nanoid } from "nanoid";
 import { detectIpVersion, isPrivateOrReservedIp, normalizeIp } from "./ipValidation";
 import { escapeRegExp } from "./regex";
+import { describeEvent } from "./eventDescription";
 import type { NetworkType } from "./geo/types";
 import type { RiskLevel } from "./risk";
 export type { RiskLevel } from "./risk";
@@ -47,6 +48,10 @@ export type IpRecord = {
   risk_reason: string;
   network_type: NetworkType | null;
   is_private: boolean;
+  // Do último evento registrado — pra tabela de histórico mostrar de onde
+  // veio e o que aconteceu sem precisar abrir o detalhe de cada IP.
+  last_source: string | null;
+  last_action: string | null;
   // Preenchidos via join com o cache de geolocalização (lib/geo) só para
   // exibição na tabela — null quando o IP nunca foi consultado.
   country?: string | null;
@@ -152,6 +157,8 @@ export async function recordAccess(input: {
           risk_level: level,
           risk_reason: reason,
           is_private: isPrivateOrReservedIp(ip),
+          last_source: doc.source,
+          last_action: describeEvent(doc),
         },
         $setOnInsert: { first_seen: now, network_type: null },
       },

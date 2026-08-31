@@ -19,6 +19,8 @@ export async function GET() {
     "Bloqueios",
     "Risco",
     "Tipo de rede",
+    "Origem",
+    "Última ação",
   ];
   const rows = items.map((r) =>
     [
@@ -30,6 +32,8 @@ export async function GET() {
       r.blocked_count,
       RISK_LABELS[r.risk_level],
       r.network_type ? NETWORK_TYPE_LABELS[r.network_type] : "Não consultado",
+      r.last_source ?? "",
+      r.last_action ?? "",
     ]
       .map(csvEscape)
       .join(",")
