@@ -3,6 +3,7 @@ import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
 import { computePreviousPeriodComparison } from "@/lib/comparison";
+import { notifyAdmins, shouldNotifyLinkView } from "@/lib/pushNotifications";
 import { formatDateBR, formatRangeLabel } from "@/lib/dateRanges";
 import { AtlasLogo, ClientLogo } from "@/components/Logo";
 import { ReportView } from "@/components/ReportView";
@@ -38,6 +39,23 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
   const clients = await getClientsByIds(link.client_ids);
   if (clients.length === 0) {
     return <UnavailableMessage />;
+  }
+
+  // Best-effort: nunca deixa uma falha aqui derrubar o carregamento do
+  // relatório do cliente. Aguarda (em vez de "fire and forget") porque em
+  // ambiente serverless a função pode ser encerrada assim que a resposta
+  // é enviada, derrubando qualquer promise pendente não aguardada.
+  try {
+    if (await shouldNotifyLinkView(token)) {
+      const clientNames = clients.map((c) => c.name).join(", ");
+      await notifyAdmins({
+        title: "Cliente acessou o relatório",
+        body: `${clientNames}${link.label ? ` (${link.label})` : ""} abriu o link do relatório.`,
+        url: "/admin/links",
+      });
+    }
+  } catch (err) {
+    console.error("Falha ao notificar acesso ao link:", err);
   }
 
   let reports: ClientReport[];

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AtlasLogo } from "@/components/Logo";
+import { PushNotificationToggle } from "@/components/PushNotificationToggle";
 import { LogoutButton } from "./LogoutButton";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <Link href="/admin/logs" className="atlas-btn-secondary">
               Logs
             </Link>
+            <PushNotificationToggle />
             <LogoutButton />
           </nav>
         </div>
