@@ -38,6 +38,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
     const dateEnd = typeof body.dateEnd === "string" ? body.dateEnd : "";
     const mode = body.mode === "frozen" ? "frozen" : "live";
     const label = typeof body.label === "string" && body.label.trim() ? body.label.trim() : null;
+    const merge = Boolean(body.merge) && clientIds.length > 1;
     const visibleSections = {
       kpis: Boolean(body.visibleSections?.kpis ?? true),
       indicators: Boolean(body.visibleSections?.indicators ?? true),
@@ -58,11 +59,13 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Nenhum cliente válido encontrado." }, { status: 404 });
     }
 
-    const frozenSnapshot = mode === "frozen" ? await buildFrozenSnapshot(clients, dateStart, dateEnd) : undefined;
+    const frozenSnapshot =
+      mode === "frozen" ? await buildFrozenSnapshot(clients, dateStart, dateEnd, merge) : undefined;
 
     const link = await updateSharedLink(id, {
       label,
       clientIds: clients.map((c) => c.id),
+      merge,
       dateStart,
       dateEnd,
       visibleSections,

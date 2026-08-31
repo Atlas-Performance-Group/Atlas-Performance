@@ -31,6 +31,7 @@ export function GenerateLinkModal({
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>(
     defaultClientId ? [defaultClientId] : []
   );
+  const [merge, setMerge] = useState(false);
   const [range, setRange] = useState<DateRange>(defaultRange);
   const [sections, setSections] = useState<VisibleSections>({
     kpis: true,
@@ -59,6 +60,7 @@ export function GenerateLinkModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           clientIds: selectedClientIds,
+          merge,
           dateStart: range.start,
           dateEnd: range.end,
           visibleSections: sections,
@@ -137,6 +139,12 @@ export function GenerateLinkModal({
                   </button>
                 ))}
               </div>
+              {selectedClientIds.length >= 2 && (
+                <label className="flex items-center gap-2 text-sm mt-3">
+                  <input type="checkbox" checked={merge} onChange={(e) => setMerge(e.target.checked)} />
+                  Unir empresas em um único relatório (soma as métricas de todas)
+                </label>
+              )}
             </div>
 
             <div>

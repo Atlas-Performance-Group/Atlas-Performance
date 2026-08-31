@@ -213,6 +213,7 @@ export type SharedLink = {
   token: string;
   label: string | null;
   client_ids: string[];
+  merge: boolean;
   date_start: string;
   date_end: string;
   visible_sections: {
@@ -231,8 +232,8 @@ export type SharedLink = {
 type SharedLinkDoc = Omit<SharedLink, "id"> & { _id: string };
 
 function toSharedLink(doc: SharedLinkDoc): SharedLink {
-  const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
+  const { _id, merge, ...rest } = doc;
+  return { id: _id, merge: merge ?? false, ...rest };
 }
 
 async function sharedLinksCollection() {
@@ -249,6 +250,7 @@ export async function listSharedLinks(): Promise<SharedLink[]> {
 export async function createSharedLink(input: {
   label?: string | null;
   clientIds: string[];
+  merge?: boolean;
   dateStart: string;
   dateEnd: string;
   visibleSections: SharedLink["visible_sections"];
@@ -263,6 +265,7 @@ export async function createSharedLink(input: {
     token,
     label: input.label ?? null,
     client_ids: input.clientIds,
+    merge: Boolean(input.merge) && input.clientIds.length > 1,
     date_start: input.dateStart,
     date_end: input.dateEnd,
     visible_sections: input.visibleSections,
@@ -292,6 +295,7 @@ export async function updateSharedLink(
   input: {
     label?: string | null;
     clientIds: string[];
+    merge?: boolean;
     dateStart: string;
     dateEnd: string;
     visibleSections: SharedLink["visible_sections"];
@@ -306,6 +310,7 @@ export async function updateSharedLink(
       $set: {
         label: input.label ?? null,
         client_ids: input.clientIds,
+        merge: Boolean(input.merge) && input.clientIds.length > 1,
         date_start: input.dateStart,
         date_end: input.dateEnd,
         visible_sections: input.visibleSections,

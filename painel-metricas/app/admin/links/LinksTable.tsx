@@ -75,6 +75,15 @@ export function LinksTable({ links, clients }: { links: SharedLink[]; clients: C
               <tr key={link.id} style={{ borderTop: "1px solid var(--line-soft)" }}>
                 <td className="py-2 pr-4">
                   {clientNames(link.client_ids)}
+                  {link.merge && (
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full ml-2"
+                      style={{ background: "rgba(212,163,60,0.15)", color: "var(--gold-500)" }}
+                      title="As métricas dessas empresas aparecem somadas em um único relatório"
+                    >
+                      unidas
+                    </span>
+                  )}
                   {link.label && (
                     <div className="text-xs" style={{ color: "var(--ink-faint)" }}>
                       {link.label}

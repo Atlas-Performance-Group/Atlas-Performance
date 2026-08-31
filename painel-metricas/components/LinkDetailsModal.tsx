@@ -30,6 +30,7 @@ export function LinkDetailsModal({
   onSaved: () => void;
 }) {
   const [selectedClientIds, setSelectedClientIds] = useState<string[]>(link.client_ids);
+  const [merge, setMerge] = useState(link.merge);
   const [range, setRange] = useState<DateRange>({ start: link.date_start, end: link.date_end });
   const [sections, setSections] = useState<VisibleSections>(link.visible_sections);
   const [mode, setMode] = useState<"live" | "frozen">(link.mode);
@@ -53,6 +54,7 @@ export function LinkDetailsModal({
         body: JSON.stringify({
           action: "update",
           clientIds: selectedClientIds,
+          merge,
           dateStart: range.start,
           dateEnd: range.end,
           visibleSections: sections,
@@ -126,6 +128,19 @@ export function LinkDetailsModal({
                   </button>
                 ))}
               </div>
+              {selectedClientIds.length >= 2 && (
+                <label className="flex items-center gap-2 text-sm mt-3">
+                  <input
+                    type="checkbox"
+                    checked={merge}
+                    onChange={(e) => {
+                      setMerge(e.target.checked);
+                      setSaved(false);
+                    }}
+                  />
+                  Unir empresas em um único relatório (soma as métricas de todas)
+                </label>
+              )}
             </div>
 
             <div>

@@ -2,13 +2,13 @@ import { getClientsByIds, getMetricsInRange, getSharedLinkByToken, sumRows } fro
 import { computeDerivedMetrics } from "@/lib/metrics";
 import { generateInsights } from "@/lib/insights";
 import { aggregateExtraMetrics } from "@/lib/extraMetrics";
-import { computePreviousPeriodComparison } from "@/lib/comparison";
+import { computePreviousPeriodComparison, computePreviousPeriodComparisonForClients } from "@/lib/comparison";
 import { notifyAdmins } from "@/lib/pushNotifications";
 import { formatDateBR, formatRangeLabel } from "@/lib/dateRanges";
 import { AtlasLogo, ClientLogo } from "@/components/Logo";
 import { ReportView } from "@/components/ReportView";
 import type { ClientReport } from "@/lib/types";
-import type { DailyRow } from "@/lib/data";
+import type { Client, DailyRow } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +59,75 @@ export default async function PublicReportPage({ params }: { params: Promise<{ t
   let reports: ClientReport[];
   let generatedAt = new Date();
 
-  if (link.mode === "frozen" && link.frozen_snapshot) {
+  if (link.merge && clients.length > 1) {
+    // Link "unir empresas": em vez de uma seção por empresa, soma as
+    // métricas de todas elas num único relatório.
+    const mergedClient: Client = {
+      id: "merged",
+      slug: "merged",
+      name: clients.map((c) => c.name).join(" + "),
+      business_label: link.label ?? "Grupo de Empresas",
+      logo_url: clients.find((c) => c.logo_url)?.logo_url ?? null,
+      target_cost_per_conversation: null,
+      created_at: new Date().toISOString(),
+    };
+
+    if (link.mode === "frozen" && link.frozen_snapshot) {
+      const snapshot = link.frozen_snapshot as {
+        generatedAt?: string;
+        data: {
+          clientId: string;
+          totals: ClientReport["totals"];
+          derived: ClientReport["derived"];
+          insights: ClientReport["insights"];
+          daily: DailyRow[];
+          extraMetrics: ClientReport["extraMetrics"];
+          comparison?: ClientReport["comparison"];
+        }[];
+      };
+      const entry = snapshot.data[0];
+      reports = entry
+        ? [
+            {
+              client: mergedClient,
+              range: { start: link.date_start, end: link.date_end },
+              totals: entry.totals,
+              derived: entry.derived,
+              insights: entry.insights,
+              daily: entry.daily,
+              extraMetrics: entry.extraMetrics ?? [],
+              comparison: entry.comparison ?? null,
+            },
+          ]
+        : [];
+      if (snapshot.generatedAt) generatedAt = new Date(snapshot.generatedAt);
+    } else {
+      const rowsPerClient = await Promise.all(
+        clients.map((client) => getMetricsInRange(client.id, link.date_start, link.date_end))
+      );
+      const rows = rowsPerClient.flat();
+      const totals = sumRows(rows, link.date_start, link.date_end);
+      const derived = computeDerivedMetrics(totals);
+      const insights = generateInsights(totals);
+      const extraMetrics = aggregateExtraMetrics(rows);
+      const comparison = await computePreviousPeriodComparisonForClients(
+        clients.map((c) => c.id),
+        { start: link.date_start, end: link.date_end }
+      );
+      reports = [
+        {
+          client: mergedClient,
+          range: { start: link.date_start, end: link.date_end },
+          totals,
+          derived,
+          insights,
+          daily: rows,
+          extraMetrics,
+          comparison,
+        },
+      ];
+    }
+  } else if (link.mode === "frozen" && link.frozen_snapshot) {
     const snapshot = link.frozen_snapshot as {
       generatedAt?: string;
       data: {
